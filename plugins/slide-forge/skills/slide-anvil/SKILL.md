@@ -35,7 +35,7 @@ Full examples and pattern catalog: [references/style-guide.md](references/style-
 
 ### Phase 1: Content Planning (Before Any Code)
 
-**This is NOT a one-shot outline.** Phase 1 is an iterative refinement loop. You must cycle through drafting, self-critique, and revision until the content passes your own quality bar. Expect 2-3 rounds minimum.
+**One pass, then hand off to critics.** Draft the content carefully in a single pass (Steps 1A→1B→1C→1D), run the mechanical self-check, then submit to critics. Do NOT self-iterate 2-3 times — the external critic loop (Crucible → Gauge → Assayer) handles iterative refinement. Your job is to produce a solid first draft, not a polished final version.
 
 #### Step 1A: Narrative Draft (서술식 초안)
 
@@ -90,61 +90,38 @@ All slides complete? Read 1→N in sequence and check:
 - Is there a clear progression (background → method → results → future)?
 - **Would a professor reading only the slide titles understand the research structure?**
 
-#### Iteration Rule
+#### Mechanical Self-Check (Before Submitting to Critics)
 
-**Repeat Steps 1A-1D until you can answer "yes" to all of these:**
+Run these **countable/verifiable** checks once. Do NOT re-draft — fix only what fails here, then submit to critics.
 
-- [ ] Every bullet contains a specific detail (number, name, version) — not just a general description
-- [ ] Every number is followed by its interpretation ("So what?") — never naked numbers
-- [ ] Every English term has Korean meaning on first use — count: 3+ unexplained terms per slide = fail
-- [ ] Every visual adds insight beyond what the text says
-- [ ] The narrative flows logically without unexplained jumps
-- [ ] No bullet ends with a polite verb (습니다/합니다/됩니다)
-- [ ] Each slide has 8-15 lines of text — fewer than 8 = too thin, add interpretation
-- [ ] A domain expert would find nothing obviously wrong or oversimplified
+- [ ] No bullet ends with a polite verb (습니다/합니다/됩니다) — search and replace
+- [ ] Each slide has 8-15 lines of text — fewer than 8 = add one more sub-bullet with interpretation
+- [ ] Per slide: count unexplained English terms. 3+ = add Korean meaning on first use
+- [ ] No "라벨: 한 줄 설명" colon-enumeration pattern (3+ in a slide = restructure)
+- [ ] No question-form subtitles ("왜 ~인가?") — rewrite as assertive statement
+- [ ] Every number has at least one `→` sub-line with interpretation
 
-Only then proceed to Phase 2.
+These are mechanical — you can verify them by scanning the text. Semantic quality (depth, narrative flow, persuasiveness) is judged by external critics, not by you.
+
+Proceed to Phase 2 after this check passes.
 
 ### Phase 2: Code Generation + Slide-by-Slide Review
 
 Only after Phase 1 is complete, write PptxGenJS code following [pptxgenjs.md](pptxgenjs.md).
 
-**After writing the code for each slide**, pause and run a critical review. Do NOT batch all slides and review later — review each slide immediately after writing it.
+**After writing all slide code**, run a quick mechanical scan. Semantic quality review is the critics' job — do not duplicate it here.
 
-#### Per-Slide Self-Review Checklist
+#### Post-Code Mechanical Scan
 
-For every slide you just coded, ask these questions **in order**:
+Scan the generated code/text for these **mechanically verifiable** issues only:
 
-**1. 이해 가능성 (Comprehensibility)**
-- "이 슬라이드만 단독으로 봤을 때, 청중이 무슨 내용인지 이해할 수 있는가?"
-- "전문 용어를 처음 사용하는 곳에서 설명 없이 쓰지는 않았는가?" → 슬라이드 내 미설명 영문 용어를 세어보라. 3개 이상이면 즉시 수정.
-- "불릿 하나하나가 명확한 하나의 메시지를 전달하는가, 아니면 여러 내용이 뒤섞여 있는가?"
-- "숫자를 제시한 후 '그래서 이게 왜 중요한가?'에 대한 해석이 있는가?" → 없으면 해석 추가. 숫자만 던지는 것은 발표가 아니라 데이터 덤프.
+- [ ] Bullet text matches the Phase 1 plan — no content was lost or invented during code translation
+- [ ] Bullet levels are encoded as real indentation levels (not literal leading spaces)
+- [ ] No polite verb endings slipped in (습니다/합니다/됩니다)
+- [ ] Visual elements have correct data (labels, values match the plan)
+- [ ] No placeholder text remains (XXXX, lorem, TBD without gray dashed border)
 
-**2. 필수성 (Necessity)**
-- "이 문장을 삭제하면 슬라이드의 핵심 메시지가 훼손되는가?" → No면 삭제
-- "이 시각 자료를 제거해도 내용 전달에 지장이 없는가?" → Yes면 교체
-- "장식용 요소(의미 없는 박스, 불필요한 구분선)가 있는가?" → 있으면 제거
-
-**3. 중복 검사 (Redundancy)**
-- "이전 슬라이드에서 이미 말한 내용을 반복하고 있지는 않은가?"
-- "같은 슬라이드 내에서 표현만 다르고 의미가 같은 불릿이 있지는 않은가?"
-- "텍스트와 시각 자료가 완전히 같은 정보를 보여주고 있지는 않은가?" → 시각 자료는 텍스트를 보충해야지, 복사해서는 안 됨
-
-**4. 깊이 검사 (Depth)**
-- "이 불릿이 너무 피상적이지는 않은가?" — "모델 성능 향상" 같은 빈 문장 대신 "F1-Score 85.3% → 91.9% (Block Size 256 적용)"
-- "숫자를 나열한 뒤 '이 숫자가 의미하는 바'를 설명했는가?" — "+24.3pp 우위" 자체는 의미가 없음. "전 구간에서 일관된 우위 → 특정 조건이 아닌 구조적 차이"처럼 해석 필수
-- "구체적 수치, 조건, 근거가 빠져 있지는 않은가?"
-- "전문가가 읽었을 때 '당연한 소리'라고 느낄 내용만 있지는 않은가?"
-
-**5. 내러티브 연결 (Narrative Flow)**
-- "이전 슬라이드의 결론이 이 슬라이드의 도입으로 자연스럽게 이어지는가?"
-- "이 슬라이드가 전체 발표의 어디쯤에 해당하는지 청중이 감지할 수 있는가?"
-- "이 슬라이드의 마지막 불릿이 다음 슬라이드로의 자연스러운 전환점이 되는가?"
-
-#### Fix-Before-Continue Rule
-
-위 체크리스트에서 **하나라도 문제가 발견되면 즉시 수정** 후 다음 슬라이드로 넘어간다. 문제를 모아뒀다가 나중에 고치지 않는다 — 앞 슬라이드의 문제가 뒤 슬라이드 내용에 영향을 주기 때문이다.
+Fix any failures, then proceed to Phase 3. Do NOT review for depth, narrative, or persuasiveness — that is Slide-Assayer's responsibility.
 
 ### Phase 3: QA
 
@@ -225,16 +202,16 @@ Then **read each PNG file** (e.g., `output_slides/slide-01.png`) and inspect vis
 - 타이틀이 너무 크거나 작지 않은가?
 - 볼드/일반이 적절히 구분되는가?
 
-#### Verification Loop (반복 필수)
+#### Verification (1 Round)
 
 ```
 1. 코드 생성 완료 → PPTX 생성 → 이미지 렌더링
 2. 모든 슬라이드 이미지를 읽고(Read) 위 체크리스트로 검사
-3. 발견된 문제 목록 작성 (0개면 더 비판적으로 다시 검사)
-4. 코드 수정 → PPTX 재생성 → 이미지 재렌더링
-5. 수정된 슬라이드 이미지를 다시 읽고(Read) 재검사
-6. 새로운 문제가 0개일 때까지 반복
+3. 발견된 레이아웃/타이포 문제만 수정 → PPTX 재생성
+4. 외부 critics (Gauge + Assayer)에게 제출
 ```
+
+**1회 렌더링 + 1회 수정까지만.** 추가 반복은 critic 피드백 후에 수행한다. Smith가 자체적으로 무한 루프를 돌지 않는다.
 
 **절대 이미지를 읽지 않고 "문제 없음"이라 선언하지 말 것.** 이미지 파일을 Read tool로 직접 열어서 눈으로 확인해야만 Visual QA가 완료된다.
 

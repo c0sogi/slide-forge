@@ -74,21 +74,21 @@ A good response looks like:
 A bad response looks like:
 > "현재 구조가 자연스럽다고 판단했습니다." (why? compared to what?)
 
-## Pre-Critic Self-Checks (Run Before Hand-off)
+## Pre-Critic Self-Checks (Mechanical Only — Run Once Before Hand-off)
 
-Syntax self-check:
-- Verify all structural rules from [rules.md](../skills/slide-anvil/references/rules.md) are met (deck structure, headers, bullet syntax).
+These are quick, countable checks. Do NOT self-iterate on semantic quality — that is the critics’ job.
 
-Semantic self-check:
-- First-time viewer can understand without prior project context.
-- Every number has a so-what interpretation.
-- Jargon introduced once with Korean meaning.
-- No lazy filler patterns (e.g., "X: Y" without explanation).
-- No colon enumeration: if 3+ bullets are "라벨: 한 줄 설명", restructure as claim → evidence → implication.
-- No question-form titles: subtitles must be assertive statements ("X로 Y를 달성"), never questions ("왜 X인가?").
-- Each slide’s last line sets up the next slide.
-- Each slide has a clear "So what?" message — not just fact-listing.
-- Arrows (→) used only for conclusions/implications, not for every sub-bullet. If >50% of sub-bullets use →, review each one.
+- [ ] Slide 1 is TOC. No front/back cover slides.
+- [ ] Every slide has Major Title + `▌` subtitle.
+- [ ] Bullet markers: `-` and `→` only (no `–`, `•`, `*` in plan text).
+- [ ] Indentation: 4 spaces per level, consistent.
+- [ ] No polite verb endings (습니다/합니다/됩니다).
+- [ ] Per slide: count unexplained English terms. 3+ = add Korean meaning.
+- [ ] Per slide: 8-15 lines of text. Under 8 = add one sub-bullet.
+- [ ] Per slide: `→` ratio under 50%. Over 50% = review each arrow.
+- [ ] No colon enumeration: 3+ "라벨: 한 줄 설명" bullets = restructure.
+- [ ] No question-form subtitles ("왜 ~인가?") = rewrite as assertion.
+- [ ] Every number has a `→` interpretation line.
 
 ## Error Recovery
 
