@@ -71,8 +71,15 @@ Do not provide vague advice. Every point must be actionable.
 - The Slide-Smith types literal leading spaces into slide text to simulate indent.
 - Long bullet lines that visibly wrap mid-sentence.
 
+### Subtitle Form Violations (Hard FAIL)
+- **Verbose sentence-form subtitle**: subtitle reads as a full sentence with subject-object-verb structure (e.g., "비전 단독의 구조적 한계를 DT 기하 사전 정보로 돌파"). Subtitles must be concise noun phrases (2-8 words).
+- **Concatenation subtitle**: subtitle joins multiple concepts with `+` or em-dash extensions (e.g., "Soft Gating with Safety Retention + 복합 기하 스코어링"). One subtitle = one topic.
+- **Word count**: count Korean words (spaces) + English words. If > 8, it is likely too long — flag for review.
+- See rules.md > Headers > Subtitle Form for the full rule and examples.
+
 ### Layout Patterns (Visual QA — Hard FAIL)
 - **Left-right text/visual split**: text on the left and chart/image on the right is a FAIL. The default is top text / bottom visuals. Left-right is only acceptable for explicit side-by-side comparison slides.
 - **Any overlap**: shapes, text boxes, or images overlapping each other — even partial overlap is a FAIL. Check every rendered slide image carefully for elements touching or crossing boundaries.
 - **Clipped elements**: visual elements (charts, diagrams, flow boxes) cut off at slide edges or overflowing out of the visible area.
 - **Visuals that are just text-in-boxes** pretending to be diagrams.
+- **Massive empty space**: if a slide's bottom 40%+ is completely empty (no chart, table, diagram, or visual), it is a layout FAIL. Either add a visual or redistribute content to fill the space. Text-only slides with large blank areas signal a thin slide (Anti-Pattern 3).

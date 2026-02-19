@@ -18,6 +18,24 @@ This is the **single source of truth** for all enforceable Slide Forge rules.
 - Every slide has exactly one subtitle line starting with `▌` at the top of the text area.
 - The `▌` symbol must NOT appear as a bullet prefix -- it is a section header only.
 
+### Subtitle Form -- Concise Noun Phrase (Hard Rule)
+
+Subtitles (▌ lines) must be **concise noun phrases** (2-8 Korean words or equivalent), NOT descriptive sentences or verbose clauses.
+
+**Allowed subtitle forms:**
+- Topic label: `▌DT vs 비전 단독 성능 비교`
+- Topic with focus marker: `▌검증 환경: T-LESS 벤치마크`
+- Concise scope: `▌파라미터 민감도 분석`
+- Short comparison: `▌Soft Gating 설계 및 복합 스코어링`
+
+**Banned subtitle forms:**
+- Sentence/clause with verb structure: ~~`▌비전 단독의 구조적 한계를 DT 기하 사전 정보로 돌파`~~
+- Long compound with em-dash extension: ~~`▌5가지 DT 기준선 — 기하 신호별 기여 분리를 위한 가설 검정 프레임`~~
+- Concatenation with `+`: ~~`▌Soft Gating with Safety Retention + 복합 기하 스코어링`~~
+- Sentence ending with ~검증/~돌파/~해소/~수행: ~~`▌외형 기반 인식의 한계가 가장 극명한 조건에서 검증`~~
+
+**Self-check:** Read the subtitle. If it has a subject-object-verb structure or reads like a full sentence, it is too long. Compress to a topic label.
+
 ## Bullet Plan Syntax
 
 - Nested bullets use 4 leading spaces per level.
@@ -164,7 +182,9 @@ Slides must not feel like independent articles. Each slide (except TOC) must con
 4. **Text-in-Boxes as Diagrams**: If moving box text to bullets loses no info, it is not a diagram -- use real data charts, process flows, or architecture diagrams
 5. **Arrow Overuse**: Using `→` for every sub-bullet mechanically — arrows are reserved for conclusions and implications only, not examples or details
 6. **Colon Enumeration**: Bullets that follow "라벨: 한 줄 설명" pattern mechanically -- the slide reads like a dictionary, not an argument. Every bullet is "X: Y" with no reasoning, relationships, or implications between items. Fix: restructure as claim → evidence → implication. See [style-guide.md Anti-Pattern 6](style-guide.md#anti-patterns) for examples.
-7. **Question-Form Titles**: Using "왜 ~인가?", "~란 무엇인가?", "어떻게 ~할 것인가?" as subtitles or leading bullets -- the presenter's job is to deliver answers and arguments, not to pose questions. Question titles signal that the author avoided taking a clear position. Fix: rewrite as an assertive statement that conveys the slide's key message. See [style-guide.md Anti-Pattern 7](style-guide.md#anti-patterns) for examples.
+7. **Question-Form Titles/Bullets**: ANY subtitle or Level-1 bullet containing a question mark (`?`) is a hard FAIL — no exceptions. This includes but is not limited to "왜 ~인가?", "~란 무엇인가?", "어떻게 ~할 것인가?", "~충분한가?", "~보완하는가?", "~필요한가?". The presenter's job is to deliver answers, not to pose questions. **Detection: search the entire plan for `?` in subtitles and L1 bullets.** Fix: rewrite as a **concise noun phrase** that names the topic. See [style-guide.md Anti-Pattern 7](style-guide.md#anti-patterns) for examples.
+8. **Verbose Descriptive Titles**: Subtitles written as full sentences or long clauses with verb structures -- e.g., "비전 단독의 구조적 한계를 DT 기하 사전 정보로 돌파". Subtitles must be **concise noun phrases (2-8 words)**, not miniature abstracts. Sentence-form titles make the deck unreadable at TOC level and compete with content for attention. Fix: compress to a topic label (e.g., "DT 기하 정보 기반 접근"). See Headers > Subtitle Form rule.
+9. **Concatenation Titles**: Using `+`, `및/과` chains, or em-dash (`—`) extensions to cram multiple concepts into one subtitle -- e.g., "Soft Gating with Safety Retention + 복합 기하 스코어링". A subtitle names ONE topic. If two concepts must appear, split into two slides or pick the dominant one. Fix: choose the primary topic as the subtitle.
 
 ## Authenticity Markers
 

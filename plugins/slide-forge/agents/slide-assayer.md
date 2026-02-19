@@ -79,11 +79,25 @@ Colon enumeration test:
 - Judgment: collect all text before colons. If they form a generic checklist that could apply to any project (e.g., "데이터 수집 / 전처리 / 모델 학습 / 평가 / 한계점"), the slide has no argument — only labels.
 - Fix: restructure as claim → evidence → implication. Each bullet must explain WHY, not just WHAT.
 
-Question-form title test:
-- Subtitles or leading bullets phrased as questions ("왜 ~인가?", "~란 무엇인가?", "어떻게 ~할 것인가?") are a fail.
-- A subtitle must be an assertive statement that conveys the slide's key message, not a question for the audience to answer.
-- Sequential question titles ("왜 필요한가? → 무엇을 했는가? → 어떻게 평가했는가?") make the deck read like an FAQ, not a narrative — flag the entire sequence.
-- Fix: rewrite each question as the answer itself. "왜 DT가 필요한가?" → "비전 단독의 구조적 한계를 DT 기하 정보로 돌파"
+Question-form title/bullet test:
+- **ANY subtitle (▌) or Level-1 bullet containing `?` is a hard FAIL — zero exceptions.**
+- Do NOT limit detection to specific patterns like "왜 ~인가?". Scan for the literal `?` character in all subtitles and L1 bullets.
+- Common missed forms: "~충분한가?", "~보완하는가?", "~필요한가?", "~인가?", "~할 것인가?"
+- Sequential question bullets ("충분한가? → 보완하는가? → 어떻게?") make the slide read like a quiz, not a narrative — flag the entire slide.
+- Fix: compress to a topic label. "공간 근접성 단독으로 충분한가?" → "공간 근접성 단독 성능" or "ROI-Nearest 단독 평가". (NOT a verbose sentence — keep it as a concise noun phrase.)
+
+Verbose descriptive title test:
+- Subtitles that read as full sentences or clauses with verb structures are a fail.
+- Detection: if the subtitle has subject-object-verb structure, contains ~를/~을 + verb (~돌파/~검증/~해소/~수행), or exceeds 8 Korean words, it is verbose.
+- Examples of FAIL: "비전 단독의 구조적 한계를 DT 기하 사전 정보로 돌파", "외형 기반 인식의 한계가 가장 극명한 조건에서 검증"
+- Examples of PASS: "DT 기하 정보 기반 접근", "검증 환경: T-LESS 벤치마크"
+- Fix: strip verbs and compress to a noun-phrase topic label (2-8 words).
+
+Concatenation title test:
+- Subtitles joining multiple concepts with `+`, long `및/과` chains, or em-dash (`—`) extensions are a fail.
+- Detection: subtitle contains `+`, or has `—` followed by a second clause, or lists 3+ concepts.
+- Example of FAIL: "Soft Gating with Safety Retention + 복합 기하 스코어링", "5가지 DT 기준선 — 기하 신호별 기여 분리를 위한 가설 검정 프레임"
+- Fix: pick the dominant concept as the subtitle. If both matter equally, split into two slides.
 
 ## What You Review
 

@@ -49,7 +49,14 @@ Phase 2: Build.
 - Encode hierarchy with true bullet levels; do not fake indentation with spaces.
 
 Phase 3: QA.
-- Render to images and visually inspect every slide.
+- Render to images using `render_slides.py` and **visually inspect every single slide image**.
+- Never declare "문제 없음" without actually reading each rendered PNG.
+- Check per slide:
+  - Text overflow/clipping at edges?
+  - Any element overlap (even partial)?
+  - Massive empty space in bottom half? (If yes → add visual or redistribute content)
+  - Visuals actually rendered (not blank placeholders)?
+  - Font sizes consistent per level?
 - Fix overflow, overlap, inconsistent typography, and weak visuals.
 
 ## Responding to Slide-Crucible (Strategic Reflection)
@@ -86,8 +93,10 @@ These are quick, countable checks. Do NOT self-iterate on semantic quality — t
 - [ ] Per slide: count unexplained English terms. 3+ = add Korean meaning.
 - [ ] Per slide: 8-15 lines of text. Under 8 = add one sub-bullet.
 - [ ] Per slide: `→` ratio under 50%. Over 50% = review each arrow.
-- [ ] No colon enumeration: 3+ "라벨: 한 줄 설명" bullets = restructure.
-- [ ] No question-form subtitles ("왜 ~인가?") = rewrite as assertion.
+- [ ] No colon enumeration: scan EVERY slide for "라벨: 한 줄 설명" pattern. If 3+ such bullets exist on one slide, restructure as claim → evidence → implication. This is the most commonly missed anti-pattern — check aggressively.
+- [ ] No question marks in subtitles or L1 bullets: search for literal `?` — ANY match = rewrite as concise noun phrase. (Not just "왜 ~인가?" — also "~충분한가?", "~보완하는가?" etc.)
+- [ ] No verbose sentence-form subtitles: subtitle must be 2-8 word noun phrase, NOT a sentence with verb structure (~돌파/~검증/~해소).
+- [ ] No concatenation subtitles: no `+` or em-dash (`—`) extensions joining multiple concepts.
 - [ ] Every number has a `→` interpretation line.
 
 ## Error Recovery
