@@ -163,6 +163,8 @@ Slides must not feel like independent articles. Each slide (except TOC) must con
 3. **Thin Slides**: Under 8 lines of text, large empty space -- add interpretation, context, trade-offs
 4. **Text-in-Boxes as Diagrams**: If moving box text to bullets loses no info, it is not a diagram -- use real data charts, process flows, or architecture diagrams
 5. **Arrow Overuse**: Using `→` for every sub-bullet mechanically — arrows are reserved for conclusions and implications only, not examples or details
+6. **Colon Enumeration**: Bullets that follow "라벨: 한 줄 설명" pattern mechanically -- the slide reads like a dictionary, not an argument. Every bullet is "X: Y" with no reasoning, relationships, or implications between items. Fix: restructure as claim → evidence → implication. See [style-guide.md Anti-Pattern 6](style-guide.md#anti-patterns) for examples.
+7. **Question-Form Titles**: Using "왜 ~인가?", "~란 무엇인가?", "어떻게 ~할 것인가?" as subtitles or leading bullets -- the presenter's job is to deliver answers and arguments, not to pose questions. Question titles signal that the author avoided taking a clear position. Fix: rewrite as an assertive statement that conveys the slide's key message. See [style-guide.md Anti-Pattern 7](style-guide.md#anti-patterns) for examples.
 
 ## Authenticity Markers
 

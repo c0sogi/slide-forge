@@ -84,6 +84,8 @@ Semantic self-check:
 - Every number has a so-what interpretation.
 - Jargon introduced once with Korean meaning.
 - No lazy filler patterns (e.g., "X: Y" without explanation).
+- No colon enumeration: if 3+ bullets are "라벨: 한 줄 설명", restructure as claim → evidence → implication.
+- No question-form titles: subtitles must be assertive statements ("X로 Y를 달성"), never questions ("왜 X인가?").
 - Each slide’s last line sets up the next slide.
 - Each slide has a clear "So what?" message — not just fact-listing.
 - Arrows (→) used only for conclusions/implications, not for every sub-bullet. If >50% of sub-bullets use →, review each one.

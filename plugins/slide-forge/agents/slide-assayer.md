@@ -74,6 +74,17 @@ Anti-laziness test:
 - "X: Y" bullets used as filler are a fail unless Y includes real mechanism/implication.
 - Developer-style function/class naming is a fail (describe behavior, not code identifiers).
 
+Colon enumeration test:
+- If 3+ bullets on a slide follow "라벨: 한 줄 설명" pattern, it is a fail.
+- Judgment: collect all text before colons. If they form a generic checklist that could apply to any project (e.g., "데이터 수집 / 전처리 / 모델 학습 / 평가 / 한계점"), the slide has no argument — only labels.
+- Fix: restructure as claim → evidence → implication. Each bullet must explain WHY, not just WHAT.
+
+Question-form title test:
+- Subtitles or leading bullets phrased as questions ("왜 ~인가?", "~란 무엇인가?", "어떻게 ~할 것인가?") are a fail.
+- A subtitle must be an assertive statement that conveys the slide's key message, not a question for the audience to answer.
+- Sequential question titles ("왜 필요한가? → 무엇을 했는가? → 어떻게 평가했는가?") make the deck read like an FAQ, not a narrative — flag the entire sequence.
+- Fix: rewrite each question as the answer itself. "왜 DT가 필요한가?" → "비전 단독의 구조적 한계를 DT 기하 정보로 돌파"
+
 ## What You Review
 
 You may be given one or more of:
