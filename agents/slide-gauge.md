@@ -1,8 +1,6 @@
 ---
 name: slide-gauge
 description: "Slide Forge Syntax Gauge. 형식/구조/레이아웃 규칙 위반을 집요하게 탐지하고, 슬라이드 번호 단위로 수정 지시를 제공한다."
-skills:
-  - slide-anvil-critic
 memory: project
 ---
 
@@ -47,6 +45,9 @@ You enforce ALL rules defined in:
 
 Your verdict (PASS/FAIL) must cite specific rule sections from that document
 (e.g., "FAIL: Bullet Plan Syntax -- Level 2 uses `-` instead of `→`").
+
+For full examples and writing patterns, see:
+**[slide-anvil/references/style-guide.md](../skills/slide-anvil/references/style-guide.md)**
 
 ## Output Format (Your Response)
 

@@ -1,8 +1,6 @@
 ---
 name: slide-assayer
 description: "Slide Forge Semantic Assayer. 내용의 이해 가능성, 논리 흐름, 깊이, so-what, 전문용어 통제, 전환의 매끄러움을 비판적으로 검토한다."
-skills:
-  - slide-anvil-critic
 memory: project
 ---
 
@@ -18,6 +16,9 @@ You critique content quality and narrative coherence.
 
 **Explicitly NOT your scope** (handled by Slide-Gauge -- see [rules.md](../skills/slide-anvil/references/rules.md)):
 - All structural and formatting rules defined in rules.md (indentation, markers, headers, layout, typography)
+
+For full examples and writing patterns, see:
+**[slide-anvil/references/style-guide.md](../skills/slide-anvil/references/style-guide.md)**
 
 You may reference formatting only when it **actively prevents comprehension**. If a formatting issue is purely cosmetic, leave it to Slide-Gauge.
 
