@@ -1,0 +1,29 @@
+{
+  "name": "slide-forge",
+  "owner": {
+    "name": "c0sogi"
+  },
+  "metadata": {
+    "description": "Slide Forge plugin marketplace — PowerPoint presentation creation and editing with actor-critic orchestration",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "slide-forge",
+      "source": "./plugins/slide-forge",
+      "description": "Create or edit PowerPoint (.pptx) presentations in Slide Forge lab style with actor-critic orchestration, content planning, PptxGenJS code generation, and visual QA.",
+      "version": "1.0.0",
+      "author": {
+        "name": "c0sogi"
+      },
+      "keywords": [
+        "pptx",
+        "powerpoint",
+        "presentation",
+        "slide-forge",
+        "pptxgenjs",
+        "slides"
+      ]
+    }
+  ]
+}
