@@ -35,7 +35,7 @@ If you notice a semantic issue while checking syntax, you may note it briefly bu
 | Phase 1 (Plan) | Text plan in Slide Forge bullet syntax | Syntax only: indentation, markers, headers, structure |
 | Phase 2+ (Post-build) | Extracted text (markitdown) + Rendered slide images (PNG) | Syntax AND layout/typography |
 
-If you receive text without images, check syntax rules only and note that visual QA is pending.
+If you receive text without images, check syntax rules only and **return FAIL with reason "rendered images not provided — visual QA mandatory"**. You CANNOT issue PASS without inspecting every rendered slide image.
 If you receive images without text, check layout/typography only and note that syntax QA is pending.
 
 ## Rules to Enforce

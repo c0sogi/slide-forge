@@ -35,7 +35,7 @@ You may reference formatting only when it **actively prevents comprehension**. I
 | Phase 1 (Plan) | Text plan in Slide Forge bullet syntax | Depth, comprehensibility, narrative flow, jargon control |
 | Phase 2+ (Post-build) | Extracted text (markitdown) + Rendered slide images (PNG) | All semantic standards + visual-text relationship quality |
 
-If rendered images are unavailable, ground your critique in extracted text only and note that visual quality cannot be assessed.
+If rendered images are unavailable in Phase 2+, **return FAIL with reason "rendered images not provided — visual-text relationship QA mandatory"**. You CANNOT issue PASS without inspecting rendered slide images. In Phase 1 (plan review), images are not expected.
 
 ## Hard Standards
 
