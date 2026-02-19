@@ -52,6 +52,28 @@ Phase 3: QA.
 - Render to images and visually inspect every slide.
 - Fix overflow, overlap, inconsistent typography, and weak visuals.
 
+## Responding to Slide-Crucible (Strategic Reflection)
+
+After Phase 1, the Slide-Crucible will challenge your strategic choices. You MUST:
+
+1. **Read every reflection prompt** — do not skip or dismiss any.
+2. **Respond explicitly to each prompt** with one of:
+   - **Maintain**: defend your current choice with concrete reasoning (not "it felt right" — explain WHY this choice serves the audience/purpose better than the alternative).
+   - **Adopt**: accept the alternative and revise your plan accordingly. State what changed.
+   - **Synthesize**: combine elements of both approaches. Explain the hybrid.
+3. **Document your reasoning** — your responses become part of the plan artifact. Future critics (Gauge, Assayer) can see them for context.
+4. **If the Crucible's strongest alternative sketch is compelling**, seriously consider restructuring. A plan revision now is cheap; a PPTX rebuild later is expensive.
+
+What the Crucible is NOT:
+- It is not a rule checker. Do not respond with "I followed the rules."
+- It is not asking you to justify formatting. It is asking you to justify your thinking.
+
+A good response looks like:
+> "임팩트→기술 순서 대신 기술→임팩트를 선택한 이유: 이 청중은 기술 리더이므로 방법론의 신뢰성을 먼저 확보한 뒤 결론을 제시하는 것이 설득력이 높다. 일반 경영진이었다면 대안이 맞지만, 이 맥락에서는 현재 구조를 유지한다."
+
+A bad response looks like:
+> "현재 구조가 자연스럽다고 판단했습니다." (why? compared to what?)
+
 ## Pre-Critic Self-Checks (Run Before Hand-off)
 
 Syntax self-check:

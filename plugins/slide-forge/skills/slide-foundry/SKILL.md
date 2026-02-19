@@ -8,10 +8,11 @@ description: "Create or edit PowerPoint (.pptx) presentations in Slide Forge sty
 ## Purpose
 This is a **skill** that orchestrates Slide Forge-style PowerPoint creation/editing using:
 - `slide-smith` (agent): plans, builds, revises the deck.
+- `slide-crucible` (agent): challenges strategic choices and provokes reflection on alternatives (strategy).
 - `slide-gauge` (agent): enforces formatting/structure rules (syntax).
 - `slide-assayer` (agent): enforces content quality, narrative coherence, and reader comprehension (semantics).
 
-If the runtime cannot spawn agents, this skill **must self-execute** the same procedure by role-playing Slide-Smith / Slide-Gauge / Slide-Assayer sequentially, with the same pass/fail gates.
+If the runtime cannot spawn agents, this skill **must self-execute** the same procedure by role-playing Slide-Smith / Slide-Crucible / Slide-Gauge / Slide-Assayer sequentially, with the same pass/fail gates.
 
 ## When to Use
 Use this skill whenever the user requests:
@@ -48,42 +49,57 @@ Outputs must include:
   - rendered slide images (PNG) for visual QA.
 
 ## Orchestration Procedure (Agent-Spawn Available)
-This skill runs an iterative actor-critic loop. The supervisor (caller) should:
+This skill runs a two-phase actor-critic loop. The supervisor (caller) should:
+
+### Phase 1a: Plan + Strategic Reflection
 1. Spawn `slide-smith` with:
    - user request,
    - source materials,
    - and this skill's hard constraints.
-2. Slide-Smith produces:
-   - a slide plan in the Slide Forge bullet syntax,
-   - then a first PPTX draft,
-   - plus extraction/render evidence.
-3. Spawn `slide-gauge` on the plan + extracted text + slide images.
+2. Slide-Smith produces a slide plan in the Slide Forge bullet syntax.
+3. Spawn `slide-crucible` on the plan.
+   - Output is **DEEPEN** or **PROCEED**, with strategic challenges and reflection prompts.
+4. If DEEPEN: pass crucible feedback to Slide-Smith. Smith must respond to every reflection prompt (accept current approach with reasoning, or adopt the alternative) and revise the plan accordingly. Re-run crucible only if the plan changed substantially (max 1 re-run).
+5. If PROCEED: Smith notes the crucible's reasoning and moves forward. Even with PROCEED, Smith should briefly acknowledge the key strategic trade-offs identified.
+
+### Phase 1b: Plan Quality Gate
+6. Spawn `slide-gauge` on the plan text.
    - Output must be **PASS** or **FAIL**, with concrete diffs and rule references.
-4. Spawn `slide-assayer` on the same artifacts.
+7. Spawn `slide-assayer` on the plan text (can run in parallel with gauge).
    - Output must be **PASS** or **FAIL**, with actionable rewrite guidance.
-5. If either critic returns **FAIL**, Slide-Smith must revise and re-submit.
-6. Stop only when **both critics PASS**, or when iteration cap is reached.
-   - Default cap: 3 iterations (raise if requested).
+8. If either critic returns **FAIL**, Slide-Smith must revise and re-submit to gauge + assayer.
+
+### Phase 2: Build + Visual QA
+9. After plan PASS: Slide-Smith builds PPTX and produces extraction/render evidence.
+10. Spawn `slide-gauge` + `slide-assayer` on extracted text + rendered images.
+11. If either returns **FAIL**, Slide-Smith must revise and re-submit.
+12. Stop only when **both critics PASS**, or when iteration cap is reached.
+   - Default cap: 3 iterations per phase (raise if requested).
    - If cap reached: ship best version plus an explicit "Known Issues" section.
 
-## Fallback Procedure (No Agent Spawning)
-If agent spawning is unavailable, the skill must self-run in three internal passes per iteration:
+Note: `slide-crucible` runs only in Phase 1a (strategic reflection). It does NOT participate in the Phase 1b/2 iteration loops — those are for tactical quality enforcement by gauge and assayer.
 
-Iteration loop (max 3 by default):
-A. **Slide-Smith pass**:
-   - produce/modify slide plan using the Slide Forge syntax,
-   - implement PPTX changes,
-   - export evidence (text extraction + slide renders).
-B. **Slide-Gauge pass**:
+## Fallback Procedure (No Agent Spawning)
+If agent spawning is unavailable, the skill must self-run in four internal passes:
+
+**Phase 1a — Strategic Reflection (once):**
+A. **Slide-Smith pass**: produce slide plan using the Slide Forge syntax.
+B. **Slide-Crucible pass**: challenge strategic choices, propose alternatives, pose reflection prompts. Output DEEPEN or PROCEED.
+C. If DEEPEN: **Slide-Smith response pass** — answer every reflection prompt, revise plan if warranted.
+
+**Phase 1b + Phase 2 — Quality Iteration (max 3 per phase):**
+D. **Slide-Gauge pass**:
    - validate all hard constraints and formatting rules,
    - produce PASS/FAIL + fix list (must be mechanically checkable).
-C. **Slide-Assayer pass**:
+E. **Slide-Assayer pass**:
    - validate reader-comprehension, narrative flow, depth ("so what"), jargon control,
    - produce PASS/FAIL + rewrite directives.
+F. If FAIL: **Slide-Smith revision pass** — address all issues, re-submit.
 
-Only commit final output when both B and C are PASS, or cap reached.
+Only commit final output when both D and E are PASS, or cap reached.
 
 **Bias mitigation for self-execution:**
+- When switching to Crucible role, forget your authorial intent. Ask "why this and not something else?" as if reviewing a stranger's plan.
 - When switching to Gauge or Assayer role, do NOT re-read your own plan or code.
 - Work ONLY from extracted evidence: `markitdown` output and rendered slide images.
 - Pretend you see these slides for the first time. If you think "I know what I meant here," the slide is unclear — flag it.
@@ -107,7 +123,31 @@ Only commit final output when both B and C are PASS, or cap reached.
 - Phase 2+: Run `markitdown` AND `render_slides.py`. Send BOTH outputs to critics. If rendering is unavailable, send text only with a note that visual QA is deferred.
 - Never send raw PptxGenJS source code to critics.
 
-## Feedback Delivery Format (Critic → Actor)
+## Feedback Delivery Format
+
+### Crucible Feedback (Phase 1a — Strategic Reflection)
+
+When passing Crucible output back to the Actor, use this structure:
+
+```
+## Strategic Reflection Feedback
+
+### Slide-Crucible: [DEEPEN|PROCEED]
+[Full Crucible output — implicit strategy, challenges, reflection prompts, alternative sketch]
+
+### Response Required
+Smith must respond to EVERY reflection prompt below:
+1. [prompt] → Smith: [reasoning]
+2. [prompt] → Smith: [reasoning]
+...
+
+### Plan Revision Summary
+[What changed and why, or explicit defense of current approach]
+```
+
+The Smith's response is part of the plan artifact — it documents the strategic reasoning behind the deck. This reasoning is visible to Gauge and Assayer for context but is not subject to their PASS/FAIL criteria.
+
+### Gauge/Assayer Feedback (Phase 1b/2 — Quality Iteration)
 
 When passing Critic output back to the Actor for revision, use this structure:
 
