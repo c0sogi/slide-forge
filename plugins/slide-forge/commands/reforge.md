@@ -1,10 +1,10 @@
 ---
-description: Create a new PowerPoint presentation in Slide Forge lab style from source materials
+description: Reforge an existing PowerPoint presentation following Slide Forge conventions
 ---
 
-# Create Presentation
+# Reforge Presentation
 
-Create a new Slide Forge-style PowerPoint presentation based on the user's request.
+Reforge (edit or improve) an existing PowerPoint presentation following Slide Forge conventions.
 
 ## Input
 
@@ -19,19 +19,21 @@ $ARGUMENTS
 **Step 2: Execute the workflow**
 
 With agents (slide-foundry):
-1. Spawn `slide-smith` with user request + source materials → produces slide plan
-2. Spawn `slide-gauge` + `slide-assayer` on the plan → get PASS/FAIL verdicts
+1. Spawn `slide-smith` with user request + existing PPTX → analyzes and plans edits
+2. Spawn `slide-gauge` + `slide-assayer` on the edit plan → get PASS/FAIL verdicts
 3. If FAIL: pass merged feedback to slide-smith → revise → re-critique
-4. After plan PASS: slide-smith builds PPTX → extract text + render images
+4. After plan PASS: slide-smith executes edits (unpack → edit → clean → pack) → extract text + render images
 5. Spawn critics on extracted text + rendered images → get PASS/FAIL
 6. Iterate until both PASS or **iteration cap reached (default: 3)**
 
 Without agents (slide-anvil):
-- Phase 0: Read sources → Phase 1: Plan → Phase 2: Build → Phase 3: QA
+1. Analyze existing presentation (`markitdown` for text, `thumbnail.py` for layouts)
+2. Plan changes → Unpack → Edit slides → Clean → Pack
+3. Visual QA (render → inspect → fix → repeat)
 
 ## Output
 
-Deliver the final `.pptx` file and rendered slide images for verification.
+Deliver the updated `.pptx` file and rendered slide images for verification.
 
 ## Pre-Flight Checks
 Before starting the workflow:
@@ -44,3 +46,8 @@ Before delivering to the user:
 1. Both critics (Gauge + Assayer) must have returned PASS, OR iteration cap was reached with a "Known Issues" section attached
 2. At least one full visual QA pass was completed (rendered images inspected)
 3. Final PPTX opens without corruption (validate.py passes if available)
+
+## Edit-Specific Validation
+1. Before editing: extract current slide text and thumbnail grid for baseline comparison
+2. After editing: diff extracted text against baseline to verify intended changes and catch unintended modifications
+3. Preserve all slides not targeted for editing -- verify untouched slide count matches

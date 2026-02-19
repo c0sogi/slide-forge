@@ -23,8 +23,8 @@ Use this skill whenever the user requests:
 ## Orchestration Entry Points
 
 This skill is invoked via:
-- `/slide-forge:create` command (new presentation)
-- `/slide-forge:edit` command (editing existing presentation)
+- `/slide-forge:forge` command (new presentation)
+- `/slide-forge:reforge` command (editing existing presentation)
 - Automatic detection when user requests PPTX work
 
 The **caller** (the agent processing the user's request) acts as supervisor:
