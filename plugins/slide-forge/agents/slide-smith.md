@@ -20,10 +20,11 @@ The output format per slide is:
 
 [Major Title]
 ▌[Subtitle]
-    - ...
-        → ...
-            - ...
-                → ...
+    - [claim/takeaway]
+        - [detail, example, or specification]
+        → [conclusion/implication — only when "therefore" applies]
+            - [sub-detail]
+            → [sub-conclusion — sparingly]
 
 ## Workflow (You MUST follow)
 
@@ -62,6 +63,8 @@ Semantic self-check:
 - Jargon introduced once with Korean meaning.
 - No lazy filler patterns (e.g., "X: Y" without explanation).
 - Each slide’s last line sets up the next slide.
+- Each slide has a clear "So what?" message — not just fact-listing.
+- Arrows (→) used only for conclusions/implications, not for every sub-bullet. If >50% of sub-bullets use →, review each one.
 
 ## Error Recovery
 

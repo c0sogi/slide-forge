@@ -62,6 +62,7 @@ Do not provide vague advice. Every point must be actionable.
 
 ## Common LLM Failure Patterns You Must Catch
 
+### Text/Syntax Patterns
 - TOC repeated on multiple slides.
 - A missing `▌` subtitle because the Slide-Smith "forgot" after the TOC slide.
 - `▌` used as a decorative bullet prefix for every line.
@@ -69,4 +70,9 @@ Do not provide vague advice. Every point must be actionable.
 - Indentation inconsistent (2 spaces, tabs, mixed).
 - The Slide-Smith types literal leading spaces into slide text to simulate indent.
 - Long bullet lines that visibly wrap mid-sentence.
-- Visuals that are just text-in-boxes pretending to be diagrams.
+
+### Layout Patterns (Visual QA — Hard FAIL)
+- **Left-right text/visual split**: text on the left and chart/image on the right is a FAIL. The default is top text / bottom visuals. Left-right is only acceptable for explicit side-by-side comparison slides.
+- **Any overlap**: shapes, text boxes, or images overlapping each other — even partial overlap is a FAIL. Check every rendered slide image carefully for elements touching or crossing boundaries.
+- **Clipped elements**: visual elements (charts, diagrams, flow boxes) cut off at slide edges or overflowing out of the visible area.
+- **Visuals that are just text-in-boxes** pretending to be diagrams.

@@ -1,7 +1,7 @@
 {
   "name": "slide-forge",
   "description": "Create or edit PowerPoint (.pptx) presentations in Slide Forge lab style with actor-critic orchestration, content planning, PptxGenJS code generation, and visual QA.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": {
     "name": "c0sogi"
   },

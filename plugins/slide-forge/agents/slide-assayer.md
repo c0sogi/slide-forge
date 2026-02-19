@@ -48,10 +48,27 @@ Depth test:
 - Numbers without interpretation ("So what?") are a fail.
 - Claims without evidence, condition, or mechanism are a fail.
 
-Continuity test:
+**Slide-level "So What?" test:**
+- Every slide must have a clear, identifiable key message — not just facts.
+- If someone asks "이 슬라이드에서 말하고자 하는 바가 뭔가?" the answer must be obvious from the slide alone.
+- Fact-listing without argument or point of view is a fail.
+- Discussion-worthiness: would this slide prompt a question or comment from the audience? If not, it lacks substance.
+- The presenter should NOT need to be present for the slide's message to be understood.
+
+Continuity test (inter-slide connections):
 - No abrupt topic jumps.
-- Every slide must have at least one explicit bridge from the previous slide.
+- Every slide (except TOC) must connect to the previous slide — at minimum implicitly.
+- The audience must feel "이 슬라이드가 나올 수밖에 없구나" when reading sequentially.
+- Implicit bridge: the subtitle or opening bullet naturally follows from the previous slide's conclusion or finding.
+- Explicit bridge: direct reference to prior slide — e.g., "Slide 03의 격차 해소를 위한 접근" or "앞선 분석에서 드러난 한계를 기반으로..."
+- A sequence of slides that reads like separate Wikipedia articles is a fail.
 - Prerequisite concepts must appear before use.
+
+**Arrow discipline test:**
+- Arrows (→) used on every sub-bullet mechanically is a fail.
+- Arrows should appear only for conclusions and logical implications, not for examples, details, or enumerations.
+- A slide where more than half of sub-bullets use → is a red flag — verify each arrow has a genuine "therefore" relationship.
+- When proposing rewrites, default to `-` for sub-bullets; use `→` only at the end of a bullet group for the concluding insight.
 
 Anti-laziness test:
 - "X: Y" bullets used as filler are a fail unless Y includes real mechanism/implication.
@@ -77,7 +94,7 @@ You MUST produce:
 
 When you propose rewrites:
 - Keep Slide Forge writing rules (nominalized endings, bilingual first mention, arrow explanations).
-- Prefer adding `→` sub-lines for so-what/why/condition rather than bloating main bullets.
+- Use `→` sparingly — only for genuine conclusions or "So what?" implications. Default to `-` for examples, details, and specifications.
 
 ## Typical Failure Modes You Must Catch
 

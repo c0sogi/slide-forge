@@ -22,10 +22,10 @@ This is the **single source of truth** for all enforceable Slide Forge rules.
 
 - Nested bullets use 4 leading spaces per level.
 - Level 1 (4 spaces): `-` only (new claim/takeaway).
-- Level 2 (8 spaces): `→` only (support for the immediately previous `-`).
-- Level 3 (12 spaces): `-` only (new sub-claim under a `→`).
-- Level 4 (16 spaces): `→` only (support for the Level 3 `-`).
-- General rule: odd levels (1, 3, 5...) use `-`, even levels (2, 4, 6...) use `→`. Each level adds 4 spaces.
+- Level 2 (8 spaces): `-` (detail, example, specification) or `→` (conclusion/implication only).
+- Level 3 (12 spaces): `-` only (new sub-claim).
+- Level 4 (16 spaces): `-` (detail) or `→` (conclusion/implication only).
+- General rule: odd levels always use `-`. Even levels default to `-`; use `→` **only** for conclusions or logical implications ("therefore"). Each level adds 4 spaces.
 - Do not use en-dash (–), dot bullets (•), or other markers.
 
 ### Planning vs Rendered Bullet Markers
@@ -46,7 +46,7 @@ The 6-level planning syntax maps to 3 visual tiers in rendered slides:
 ## Line-Break Discipline
 
 - No line breaks inside a single sentence.
-- If a line feels too long, split into a `-` line plus `→` sub-lines (not manual wrapping).
+- If a line feels too long, split into a `-` line plus `-` or `→` sub-lines as appropriate (not manual wrapping).
 
 ## PPTX Encoding Discipline
 
@@ -72,13 +72,23 @@ Exception: Sub-bullets (`→`) that explain reasoning may use slightly more natu
 - **Variable/parameter names**: explain meaning first -- "클램핑 토크(T_CLAMP)", "위치(pos)"
 - **Function/class names**: NEVER use in slides -- describe behavior instead
 
-### Arrow (→) Notation
+### Arrow (→) Notation — Use Sparingly
 
-Implies "therefore" / "leads to" -- not decorative. Used for:
-- Logical implication: "학습 = 테스트 가정 → 실제 환경에서 성능 저하"
-- Process step result: "3D 공간 재구성 → 3D Reconstruction"
-- Trade-off: "Block Size 증가 → 정확도 향상, 실시간성 저하"
-- Derived conclusion: "→ Domain Adaptation은 필수적"
+Arrows imply "therefore" / "leads to" — they are **NOT** decorative and must **NOT** be used mechanically for every sub-bullet. Arrow overuse is the #1 formatting mistake.
+
+**Allowed uses (→):**
+- Derived conclusion at the end of a bullet group: "→ Domain Adaptation은 필수적"
+- Logical implication within a sentence: "학습 = 테스트 가정 → 실제 환경에서 성능 저하"
+- Trade-off result: "Block Size 증가 → 정확도 향상, 실시간성 저하"
+- Essential "So what?" interpretation after data
+
+**Must use `-` instead of `→` for:**
+- Examples and enumerations
+- Definitions or specifications
+- Additional details that don't conclude anything
+- Any sub-bullet where removing `→` doesn't change the meaning
+
+**Self-check:** Read the sub-bullet without the arrow. If it still makes sense and doesn't lose a "therefore" relationship, it should be `-`, not `→`.
 
 ### Information Density
 
@@ -86,11 +96,27 @@ Implies "therefore" / "leads to" -- not decorative. Used for:
 - 3-6 main bullets, each with 1-3 sub-bullets
 - Sparse slides (2-3 bullets) are a fail -- add interpretation, context, trade-offs
 
+### Slide-Level Message ("So What?")
+
+Every content slide must have a clear, identifiable key message:
+- If someone asks "So what?" after reading the slide, the answer must be findable IN the slide itself.
+- Fact-listing without argument is insufficient — each slide must make a point, not just present information.
+- The slide should provoke discussion: "Is this the right approach?", "What does this imply for deployment?"
+- The presenter should NOT need to be present for the slide's message to be understood.
+
+### Inter-Slide Transitions
+
+Slides must not feel like independent articles. Each slide (except TOC) must connect to the previous one:
+- **Implicit bridge**: the subtitle or first bullet naturally follows from the previous slide's conclusion.
+- **Explicit bridge**: referencing prior findings — e.g., "Slide 03의 격차를 해소하기 위한 접근" or "앞선 분석에서 드러난 한계를 기반으로..."
+- The audience must feel: "이 슬라이드가 나올 수밖에 없구나."
+
 ## Layout Rules
 
-- **Default**: Top 40-60% = text, Bottom 40-60% = visuals (side-by-side if 2-3 visuals)
+- **Default**: Top 40-60% = text, Bottom 40-60% = visuals (side-by-side if 2-3 visuals).
+- **Left-right text/visual split is a violation** unless the slide is explicitly a side-by-side comparison. Text on left + chart/image on right = layout FAIL.
 - No overflow outside text boxes.
-- No overlap between shapes and text.
+- **No overlap between shapes and text** — any element touching or crossing another element's boundary is a hard FAIL, even partial overlap.
 - Typography sizes consistent per level.
 
 ### Typography Sizes
@@ -136,6 +162,7 @@ Implies "therefore" / "leads to" -- not decorative. Used for:
 2. **Jargon Bombardment**: 3+ unexplained English terms per slide -- every term needs Korean meaning on first use
 3. **Thin Slides**: Under 8 lines of text, large empty space -- add interpretation, context, trade-offs
 4. **Text-in-Boxes as Diagrams**: If moving box text to bullets loses no info, it is not a diagram -- use real data charts, process flows, or architecture diagrams
+5. **Arrow Overuse**: Using `→` for every sub-bullet mechanically — arrows are reserved for conclusions and implications only, not examples or details
 
 ## Authenticity Markers
 

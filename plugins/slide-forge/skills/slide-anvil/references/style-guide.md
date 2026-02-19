@@ -65,22 +65,42 @@ The single most important writing rule. Every bullet point ends with a **Sino-Ko
 ❌ "이상 탐지 모델을 개발하여 적용함"                ← too literary
 ```
 
-### Arrow (→) Notation
+### Arrow (→) Notation — Use Sparingly
 
-Used extensively for:
-- **Logical implication**: `"학습 데이터 = 테스트 데이터 가정 → 실제 환경에서 성능 저하"`
-- **Process step result**: `"3D 공간 재구성 → 3D Reconstruction"`
-- **Trade-off**: `"Block Size 증가 → 정확도 향상, 실시간성 저하"`
-- **Derived conclusion**: `"→ Domain Adaptation은 필수적"`
+Arrows always imply "therefore" or "which leads to." They are **NOT** decorative and must **NOT** appear on every sub-bullet.
 
-Arrows always imply "therefore" or "which leads to." They are NOT decorative.
+**Allowed uses:**
+- **Derived conclusion** (at end of bullet group): `"→ Domain Adaptation은 필수적"`
+- **Logical implication** (within a sentence): `"학습 데이터 = 테스트 데이터 가정 → 실제 환경에서 성능 저하"`
+- **Trade-off result**: `"Block Size 증가 → 정확도 향상, 실시간성 저하"`
+- **Essential "So what?"**: interpretation after presenting data
 
-**Full-context examples:**
+**Use `-` (not `→`) for:** examples, enumerations, definitions, specifications, and any sub-bullet that doesn't have a "therefore" relationship.
+
+**❌ BAD — arrow on every sub-bullet (the #1 mistake):**
 ```
-– 학습과 테스트 데이터가 동일 분포 가정 → 실제 환경에서는 조건 변동으로 성능 저하
-– Block Size 증가 → 정확도 향상, 실시간성 저하 (trade-off)
-– Catastrophic Forgetting → 모델 성능의 비신뢰성 출현
+– 산업용 로봇 조립 라인에서 동일 카테고리 부품이 수십 개 공존
+  → 예: T-LESS 데이터셋 — 동일 형상 산업 부품 30종
+  → 카테고리 인식만으로는 "어느 물체"인지 특정 불가
+– 기존 6DoF 포즈 추정 파이프라인의 한계
+  → 포즈 추정은 "이 물체가 무엇인가"에 답하지만 "어디에 있어야 하는가"에는 무답
+  → 동일 외형 부품이 위치만 다를 때, 비전 단독으로 인스턴스 구분 불가
 ```
+→ 문제: 6개 서브불릿 전부 `→`를 사용. 예시도 →, 사실 서술도 →, 결론도 →로 구분이 불가.
+
+**✅ GOOD — arrows only for conclusions:**
+```
+– 산업용 로봇 조립 라인에서 동일 카테고리 부품이 수십 개 공존
+  - 예: T-LESS 데이터셋 — 동일 형상 산업 부품 30종, 장면당 평균 7.5개 인스턴스
+  → 카테고리 인식만으로는 "어느 물체"인지 특정 불가
+– 기존 6DoF 포즈 추정 파이프라인의 한계
+  - 포즈 추정은 "이 물체가 무엇인가"에 답하지만 "어디에 있어야 하는가"에는 무답
+  - 동일 외형 부품이 위치만 다를 때, 비전 단독으로 인스턴스 구분 불가
+  → 인스턴스 식별 실패 → 잘못된 부품 피킹 → 라인 정지 비용 발생
+```
+→ 핵심: 각 불릿 그룹의 마지막에만 `→`로 결론. 나머지 서브불릿은 `-`로 사실/예시 나열.
+
+**Self-check:** `→`를 제거해도 의미가 변하지 않으면, 그 자리에 `-`를 써야 한다.
 
 ### Structuring Content Within a Slide
 
@@ -89,7 +109,8 @@ Use the 3-level hierarchy (section header → main bullet → sub-bullet) to org
 ```
 [Section Header — dark bar with left accent]           ← Level 1: 16-18pt bold
 – Main bullet: 핵심 내용 명사구                          ← Level 2: 12-14pt, dash prefix
-  → Sub-bullet: 보충 설명 or 결론                       ← Level 3: 10-12pt, arrow/indent
+  - Sub-bullet: 세부 사항, 예시, 사양                    ← Level 3: 10-12pt, detail/example
+  → Sub-bullet: 결론 or 함의 (sparingly)                ← Level 3: 10-12pt, conclusion only
     (1) Numbered detail when sequential                 ← Level 3 variant
 ```
 
@@ -371,6 +392,53 @@ Title: "연구 진행 상황"
 
 ---
 
+## Inter-Slide Transitions & Slide-Level Message
+
+### Every Slide Needs a "So What?"
+
+Each content slide must make a **point**, not just present information. If the audience asks "So what?" after reading the slide, the answer must be findable IN the slide.
+
+```
+❌ BAD (fact-listing, no argument):
+  T-LESS 데이터셋 선정 이유: 동일 형상 산업 부품 30종의 인스턴스 식별 난제
+  → 실제 공장 조립 라인과 유사한 다중 동일 부품 배치 장면
+  → BOP Challenge 공식 벤치마크 — 6DoF 포즈 추정 커뮤니티 표준
+
+→ 문제: 사실만 나열. "그래서 뭐?" 에 대한 답이 없음.
+  이 데이터셋을 선택한 것이 결과에 어떤 의미가 있는지 알 수 없음.
+
+✅ GOOD (fact + argument):
+  T-LESS 데이터셋 선정: "가장 어려운 조건에서 검증해야 의미가 있다"
+  - 동일 형상 산업 부품 30종 — 실제 공장 조립 라인의 난제를 그대로 재현
+  - 장면당 평균 7.5개 인스턴스, 최대 3개 동일 카테고리 공존
+  → 외형 유사도가 극단적으로 높아, 비전 단독 방법의 한계가 가장 극명하게 드러나는 환경
+  → 이 벤치마크에서 유의미한 개선이면, 실제 배포 환경에서도 효과를 기대할 수 있는 근거
+```
+
+### Inter-Slide Connections
+
+Slides must not feel like independent Wikipedia articles. Each slide (except TOC) must connect to its predecessor.
+
+**Connection types (at least one per slide):**
+- **Implicit bridge**: subtitle or first bullet naturally continues the previous slide's thread.
+- **Explicit bridge**: direct reference — "Slide 03에서 확인된 54.6%p 격차를 해소하기 위한 접근"
+- **Question-answer chain**: previous slide raises a question/problem, current slide answers it.
+
+```
+❌ BAD (no connection — slides feel independent):
+  Slide 03 subtitle: "식별 가능성 격차(Identifiability Gap) 정량화"
+  Slide 04 subtitle: "Digital Twin(DT)을 기하 사전 정보(Geometric Prior)로 활용"
+
+→ 문제: Slide 03이 격차를 보여줬는데, Slide 04가 왜 DT인지 연결이 없음.
+
+✅ GOOD (natural flow):
+  Slide 03 subtitle: "식별 가능성 격차(Identifiability Gap) 정량화"
+  Slide 04 subtitle: "Slide 03의 격차 해소 — Digital Twin(DT) 기하 사전 정보 활용"
+  또는 첫 불릿에서: "비전 단독 54.6%p 격차(Slide 03) → 추가 정보원이 필수"
+```
+
+---
+
 ## Visual-Text Relationship
 
 ### Layout Rule
@@ -648,6 +716,31 @@ What separates real Slide Forge presentations from AI-generated ones:
 
 → Self-check: "이 그림의 박스 안 텍스트를 불릿으로 옮기면 정보가 줄어드는가?"
   → No면 그림이 아님. 실제 데이터 차트나 구조도로 교체.
+```
+
+**Anti-Pattern 5: 화살표 남발 (Arrow Overuse)**
+```
+❌ BAD:
+  – 객체 정확도(object_acc)와 인스턴스 정확도(instance_acc)를 분리 측정
+    → object_acc: 올바른 카테고리의 물체를 선택했는가 ("무엇")
+    → instance_acc: 올바른 개별 인스턴스를 선택했는가 ("어느 것")
+  – 격차 지수(Delta) = 객체 정확도 - 인스턴스 정확도
+    → Delta가 클수록 "무엇인지는 알지만 어느 것인지 모르는" 상태
+    → 비전 단독 모델의 Delta: 최대 54.6%p — 구조적 한계 노출
+
+→ 문제: 정의/설명에도 `→`를 사용. "object_acc: 올바른 카테고리..." 는 정의이지
+  "그러므로"가 아니다. 전부 → 이면 진짜 결론이 어디인지 구분 불가.
+
+✅ GOOD:
+  – 객체 정확도(object_acc)와 인스턴스 정확도(instance_acc)를 분리 측정
+    - object_acc: 올바른 카테고리의 물체를 선택했는가 ("무엇")
+    - instance_acc: 올바른 개별 인스턴스를 선택했는가 ("어느 것")
+  – 격차 지수(Delta) = 객체 정확도 - 인스턴스 정확도
+    - 비전 단독 모델의 Delta: 최대 54.6%p
+    → "무엇인지는 알지만 어느 것인지 모르는" 상태 — 비전만으로는 구조적 한계
+
+→ 핵심: 정의·예시·사양은 `-`, 결론·함의·해석만 `→`.
+  슬라이드당 `→` 비율이 50%를 넘으면 남발 의심.
 ```
 
 **Last Resort — 적합한 시각 자료를 만들 데이터가 정말 없는 경우:**
