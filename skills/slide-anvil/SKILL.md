@@ -45,6 +45,27 @@ For each slide, **write the content as flowing prose first** — full sentences,
 
 For rhetorical strategy examples (prose BAD/GOOD comparisons and compressed bullet versions), see [references/phase1-examples.md](references/phase1-examples.md).
 
+#### Step 1B: Bullet Compression (불릿 압축)
+
+Compress the narrative draft from Step 1A into the Bullet Plan Syntax defined in [references/rules.md](references/rules.md).
+
+**Process:**
+1. Extract core claims and supporting evidence from the prose
+2. Convert to the hierarchical bullet structure: `-` (claim) → `→` (support) → `-` (sub-claim) → `→` (sub-support)
+3. Preserve the rhetorical strategy from the prose — different slides use different strategies:
+   - 논증형 (argument chain): 문제 → 기존 해법 실패 → 새 접근 필연성
+   - 의사결정형 (design rationale): 선택지 → 선택 이유 → 안 했으면 어떻게 됐을까
+   - 인사이트형 (interpretation): 기대 → 결과 → 해석 → 한계
+4. Ensure every bullet ends with a nominalized noun ending (명사형 종결)
+
+**Compression rules:**
+- Main bullet (`-`): one complete claim, 15-40 Korean characters
+- Sub-bullet (`→`): evidence, mechanism, or interpretation, 10-25 characters
+- No information loss: every key insight from the prose must survive compression
+- No polite endings (습니다/합니다) — use noun endings (~수행, ~구축, ~확인, etc.)
+
+For detailed BAD/GOOD compression examples by rhetorical strategy, see [references/phase1-examples.md](references/phase1-examples.md).
+
 #### Step 1C: Visual Specification + Critical Evaluation
 
 For each slide, specify the visual element, then **challenge it**:

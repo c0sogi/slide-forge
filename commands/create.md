@@ -24,7 +24,7 @@ With agents (slide-foundry):
 3. If FAIL: pass merged feedback to slide-smith → revise → re-critique
 4. After plan PASS: slide-smith builds PPTX → extract text + render images
 5. Spawn critics on extracted text + rendered images → get PASS/FAIL
-6. Iterate until both PASS or cap reached
+6. Iterate until both PASS or **iteration cap reached (default: 3)**
 
 Without agents (slide-anvil):
 - Phase 0: Read sources → Phase 1: Plan → Phase 2: Build → Phase 3: QA
