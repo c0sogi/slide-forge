@@ -1,5 +1,5 @@
 """
-Base validator with common validation logic for document files.
+Base validator with common validation logic for PPTX files.
 """
 
 import re
@@ -41,18 +41,12 @@ class BaseSchemaValidator:
     ELEMENT_RELATIONSHIP_TYPES = {}
 
     SCHEMA_MAPPINGS = {
-        "word": "ISO-IEC29500-4_2016/wml.xsd",  
-        "ppt": "ISO-IEC29500-4_2016/pml.xsd",  
-        "xl": "ISO-IEC29500-4_2016/sml.xsd",  
+        "ppt": "ISO-IEC29500-4_2016/pml.xsd",
         "[Content_Types].xml": "ecma/fouth-edition/opc-contentTypes.xsd",
         "app.xml": "ISO-IEC29500-4_2016/shared-documentPropertiesExtended.xsd",
         "core.xml": "ecma/fouth-edition/opc-coreProperties.xsd",
         "custom.xml": "ISO-IEC29500-4_2016/shared-documentPropertiesCustom.xsd",
         ".rels": "ecma/fouth-edition/opc-relationships.xsd",
-        "people.xml": "microsoft/wml-2012.xsd",
-        "commentsIds.xml": "microsoft/wml-cid-2016.xsd",
-        "commentsExtensible.xml": "microsoft/wml-cex-2018.xsd",
-        "commentsExtended.xml": "microsoft/wml-2012.xsd",
         "chart": "ISO-IEC29500-4_2016/dml-chart.xsd",
         "theme": "ISO-IEC29500-4_2016/dml-main.xsd",
         "drawing": "ISO-IEC29500-4_2016/dml-main.xsd",
@@ -71,7 +65,7 @@ class BaseSchemaValidator:
         "http://schemas.openxmlformats.org/package/2006/content-types"
     )
 
-    MAIN_CONTENT_FOLDERS = {"word", "ppt", "xl"}
+    MAIN_CONTENT_FOLDERS = {"ppt"}
 
     OOXML_NAMESPACES = {
         "http://schemas.openxmlformats.org/officeDocument/2006/math",

@@ -55,6 +55,16 @@ The single most important writing rule. Every bullet point ends with a **Sino-Ko
 → 대부분 큰 잔차의 지배항으로 작용, 마찰관련 규칙이 나타남
 ```
 
+**✅/❌ Examples:**
+```
+✅ "진동 데이터 기반 이상 탐지 모델 구축"          ← ends with 구축 (noun)
+✅ "하중 효과를 반영하지 못한 한계점 존재"          ← ends with 존재 (noun)
+✅ "Block Size 증가 시 정확도 향상, 실시간성 저하"   ← ends with 저하 (noun)
+
+❌ "진동 데이터 기반 이상 탐지 모델을 구축하였습니다"  ← polite ending
+❌ "이상 탐지 모델을 개발하여 적용함"                ← too literary
+```
+
 ### Arrow (→) Notation
 
 Used extensively for:
@@ -65,9 +75,23 @@ Used extensively for:
 
 Arrows always imply "therefore" or "which leads to." They are NOT decorative.
 
+**Full-context examples:**
+```
+– 학습과 테스트 데이터가 동일 분포 가정 → 실제 환경에서는 조건 변동으로 성능 저하
+– Block Size 증가 → 정확도 향상, 실시간성 저하 (trade-off)
+– Catastrophic Forgetting → 모델 성능의 비신뢰성 출현
+```
+
 ### Structuring Content Within a Slide
 
 Use the 3-level hierarchy (section header → main bullet → sub-bullet) to organize content. The structure should emerge naturally from the content's logic, not from formatting conventions.
+
+```
+[Section Header — dark bar with left accent]           ← Level 1: 16-18pt bold
+– Main bullet: 핵심 내용 명사구                          ← Level 2: 12-14pt, dash prefix
+  → Sub-bullet: 보충 설명 or 결론                       ← Level 3: 10-12pt, arrow/indent
+    (1) Numbered detail when sequential                 ← Level 3 variant
+```
 
 ### Bullet Length and Density
 
@@ -78,6 +102,36 @@ Use the 3-level hierarchy (section header → main bullet → sub-bullet) to org
 - Total word count: 150-300 words per content slide
 
 **This is dense.** Don't fear information density. Sparse slides with 2-3 shallow bullets waste the audience's time and don't match real Slide Forge presentations.
+
+### Audience Perspective (청중 관점 서술)
+
+Write as if the audience has **zero prior context** about your project. You developed this code — the audience did not. Every technical name must earn its place by being explained.
+
+```
+❌ "T_CLAMP 신호와 BACK_POS를 활용한 이상 탐지"
+   → 듣는 사람은 T_CLAMP, BACK_POS가 뭔지 모름
+
+✅ "클램핑 토크(T_CLAMP)와 후진 위치(BACK_POS) 신호를 활용한 이상 탐지"
+   → 변수가 무엇을 의미하는지 먼저 설명한 뒤 괄호로 원래 이름 표기
+
+❌ "get_features() 함수로 27개 피처 추출 후 train_model()로 학습"
+   → 코드 리뷰가 아닌 발표임. 함수명은 청중에게 무의미
+
+✅ "잔차 기반 11개 + 동역학 기반 16개, 총 27개 피처를 추출하여 모델 학습"
+   → 코드 구현이 아닌 내용 자체를 설명
+
+❌ "pos, spd, trq 데이터를 입력으로 사용"
+   → 축약 변수명만으로는 무슨 데이터인지 알 수 없음
+
+✅ "위치(pos), 속도(spd), 토크(trq) 데이터를 입력으로 사용"
+   → 의미를 먼저, 약어를 괄호에
+```
+
+Rules:
+- **변수/신호명**: 처음 등장 시 반드시 의미 설명 + 괄호로 원래 이름 — `"클램핑 토크(T_CLAMP)"`, `"위치(pos)"`
+- **함수/클래스명**: 발표에서는 절대 사용하지 않음. 그 함수가 **하는 일**을 설명 — `"피처 추출"` not `"get_features()"`
+- **약어/축약어**: 청중이 모를 수 있는 약어는 풀어서 설명 후 사용 — `"마할라노비스 거리(MCD)"` then `"MCD"`
+- **Self-check**: "이 이름을 처음 보는 사람이 이 문장만으로 이해할 수 있는가?" → No면 설명 추가
 
 ---
 
@@ -323,6 +377,23 @@ Title: "연구 진행 상황"
 
 **Top = Text (40-60%), Bottom = Visuals (40-60%).** This is the dominant pattern across all Slide Forge presentations.
 
+```
+┌──────────────────────────────────┐
+│ Slide Title (20-24pt bold)       │
+│                                  │
+│ – Bullet text                    │  ← Upper 40-60%: TEXT
+│   → Sub-bullet                   │
+│ – More bullets                   │
+│                                  │
+│ ┌──────────┐  ┌──────────┐      │  ← Lower 40-60%: VISUALS (1-3)
+│ │  Chart    │  │  Diagram  │     │
+│ │           │  │           │     │
+│ └──────────┘  └──────────┘      │
+└──────────────────────────────────┘
+```
+
+This is the **only** default layout. Use left-right splits only for side-by-side comparison where it's clearly better.
+
 When 2-3 visuals are present, arrange them **side-by-side horizontally** in the lower area.
 
 ### Visual Types by Purpose
@@ -492,6 +563,97 @@ What separates real Slide Forge presentations from AI-generated ones:
 | Generic stock photos | Real equipment/output screenshots |
 | Diagrams without labels | Label every box and arrow |
 | Single visual when data demands more | 2-3 visuals side-by-side when appropriate |
+
+### Detailed BAD/GOOD Examples
+
+아래는 AI가 만든 슬라이드에서 반복적으로 나타나는 문제 패턴이다. 하나라도 해당되면 즉시 수정.
+
+**Anti-Pattern 1: 숫자 투하 (Number Dumping)**
+```
+❌ BAD:
+  – 동일 물체 1개: +20.9pp / 2개: +37.8pp / 3+: +56.1pp (Vision 8.2% → DT 64.3%)
+  – 평균 24.3pp 우위, Bootstrap 95% CI 모두 양수 → strict dominance 확인
+
+→ 문제: 숫자는 있지만 해석이 없음.
+  "pp"가 뭔지, 왜 이 숫자가 중요한지, 청중이 뭘 기억해야 하는지 전혀 모름.
+
+✅ GOOD:
+  – 동일 물체가 여러 장면에 등장할수록 DT의 이점이 급격히 증가
+    → 1개 등장: +20.9%p / 2개: +37.8%p / 3개 이상: +56.1%p
+    → 다중 인스턴스가 많은 실제 환경일수록 DT가 유리한 구조
+  – 16개 전 커버리지 수준에서 DT가 Vision 대비 평균 24.3%p 높은 정확도
+    → 특정 조건이 아닌 전 구간에서의 일관된 우위 (통계적으로 유의)
+
+→ 핵심: "숫자가 무엇을 의미하는가"를 반드시 한 줄 덧붙인다.
+```
+
+**Anti-Pattern 2: 전문용어 폭격 (Jargon Bombardment)**
+```
+❌ BAD:
+  – Bootstrap 95% CI 모두 양수 → strict dominance 확인
+  – τ=0.35: Coverage 90.15%, Wrong-Pick 21.51%
+
+→ 문제: Bootstrap CI, strict dominance, τ, Coverage, Wrong-Pick
+  — 한 슬라이드에 설명 없는 전문용어가 5개 이상. 개발자 본인만 이해 가능.
+
+✅ GOOD:
+  – 부트스트랩 신뢰구간(Bootstrap 95% CI) 분석 결과, 모든 조건에서 DT 우위 확인
+    → 통계적으로 "우연이 아닌 구조적 차이"임을 입증
+  – 위험 허용 수준(τ) 0.35 기준:
+    → 커버리지(판단 가능 비율) 90.15%, 오판율(Wrong-Pick) 21.51%
+
+→ 핵심: 한 슬라이드에 미설명 전문용어가 3개 이상이면 위험 신호.
+  모든 영문 용어에 한국어 의미를 먼저 제시.
+```
+
+**Anti-Pattern 3: 얇은 슬라이드 (Thin Slide)**
+```
+❌ BAD:
+  불릿 3개 + 서브불릿 3개 = 텍스트 6줄. 나머지는 빈 공간.
+  → 슬라이드 상단 30%만 텍스트, 하단은 차트+테이블이지만
+    차트/테이블도 설명 없이 던져져 있음.
+
+→ 문제: 청중은 차트를 보고 스스로 해석해야 함. 발표자가 해석을 제공하지 않음.
+
+✅ GOOD:
+  불릿 4-6개 + 서브불릿 6-10개 = 텍스트 10-15줄.
+  차트/테이블 아래 또는 옆에 핵심 해석 1-2줄 반드시 포함:
+  "→ 동일 물체 3개 이상 장면에서 DT가 Vision 대비 7배 이상 정확"
+
+→ 핵심: 시각 자료는 스스로 말하지 않는다. 반드시 해석 문장을 함께 제시.
+```
+
+**Anti-Pattern 4: 텍스트 위장 다이어그램 (Text-in-Boxes Disguised as Diagram)**
+```
+❌ BAD:
+  "비교 다이어그램"이라고 하면서 실제로는:
+  ┌─────────────────┐         ┌─────────────────┐
+  │ ✗ 외형 기반       │   →    │ ✓ 기하 기반       │
+  │ 동일 외형 → 구분불가│         │ 공간 정보 → 구분가능│
+  │ Acc: 41.4%       │         │ Acc: 77.0%       │
+  └─────────────────┘         └─────────────────┘
+  → 색상 박스 안에 텍스트를 넣고 화살표로 연결한 것.
+    불릿을 박스에 옮겨 담은 것일 뿐, "그림"이 아님.
+
+→ 판별법: 박스 안의 내용을 그대로 불릿으로 옮겨도 정보 손실이 없으면
+  그것은 다이어그램이 아니라 장식된 텍스트이다.
+
+✅ GOOD — 진짜 시각 자료의 기준:
+  시각 자료는 텍스트로 표현할 수 없는 정보를 전달해야 한다:
+  - 데이터 차트: 막대/선/산점도로 수치 간 크기·추이·분포를 비교
+  - 프로세스 플로우: 단계 간 분기/합류/피드백 루프를 시각적으로 표현
+  - 아키텍처 다이어그램: 모듈 간 데이터 흐름, 입출력 관계
+  - 테이블: 다차원 수치 비교 (3개 이상의 항목 × 2개 이상의 메트릭)
+  - 어노테이션 이미지: 실제 사진/스크린샷 위에 영역 표시
+
+→ Self-check: "이 그림의 박스 안 텍스트를 불릿으로 옮기면 정보가 줄어드는가?"
+  → No면 그림이 아님. 실제 데이터 차트나 구조도로 교체.
+```
+
+**Last Resort — 적합한 시각 자료를 만들 데이터가 정말 없는 경우:**
+회색 점선 테두리의 플레이스홀더 박스를 배치하고, 그 안에 "이 자리에 들어갈 시각 자료"를 설명하는 문구를 넣는다.
+예: `"※ 실제 실험 데이터 확보 후, Joint별 R² 비교 막대 차트 삽입 예정"`
+이것은 가짜 다이어그램을 만드는 것보다 정직하고, 발표자에게 어떤 자료를 준비해야 하는지 명확한 가이드를 제공한다.
 
 ---
 
