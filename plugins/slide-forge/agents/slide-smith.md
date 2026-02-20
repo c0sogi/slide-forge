@@ -86,89 +86,20 @@ The supervisor SHOULD include this absolute path when spawning Smith. Smith MUST
 1. Read `.slide-forge/narrative/slide-plan.md` — this is your content specification.
 2. Read `.slide-forge/narrative/visual-spec.md` — this tells you what visual elements each slide needs.
 3. Write a Python script (`.slide-forge/build/create_slides.py`) following [slide-forge-api.md](../skills/slide-anvil/slide-forge-api.md):
-   - **반드시 `get_presentation()`으로 시작** — 이 함수가 built-in 템플릿을 로드함. 절대 `Presentation()`을 직접 호출하지 말 것
-   - 슬라이드별 순서: `create_slide()` → `add_slide_title()` → `add_content_box()` → `add_section()` → `add_bullet()` 순서 준수
-   - `add_section()`은 TextFrame당 정확히 1회만 호출 (API가 중복 호출 시 RuntimeError 발생)
-   - `add_bullet()`/`add_spacer()`는 `add_section()` 이후에만 호출 가능 (API가 순서 위반 시 RuntimeError 발생)
-   - Translate each slide's bullet structure into `add_section()`, `add_bullet()` calls
-   - Encode hierarchy with true bullet levels; do not fake indentation with spaces
-   - Implement visual elements per visual-spec.md (charts, tables, figures, diagrams)
-   - Use images from `.slide-forge/sources/images/` where specified
-   - Handle `[CODE-GENERATED]` markers: write a separate Python script per figure using the 코드 생성 명세 (library, data, chart type, highlight point), save output PNG to `.slide-forge/build/figures/`, then embed via `add_figure()`
-   - Handle `[IMAGE-NEEDED: ...]` markers with gray dashed-border placeholder boxes
-   - Handle `[TBD: ...]` markers with gray dashed-border placeholder boxes
+   - API 호출 순서와 제약 조건은 slide-forge-api.md를 정확히 따를 것
+   - **시각 자료는 `visual_area()`를 기본으로 사용** — 수동 EMU 좌표보다 안전. 2개 이상 나란히 배치 시 `weight`로 비율 조정. `.render()` 호출 필수
+   - `[CODE-GENERATED]` 마커: figure별 별도 Python 스크립트 작성 → `.slide-forge/build/figures/`에 PNG 저장 → `add_figure()`로 삽입
+   - `[IMAGE-NEEDED: ...]` / `[TBD: ...]` 마커: gray dashed-border placeholder box로 처리
 4. Run the script: `uv run .slide-forge/build/create_slides.py`
-5. Run Post-Code Mechanical Scan (below).
-
-### Post-Code Mechanical Scan
-
-After writing all slide code, scan for these **mechanically verifiable** issues only:
-
-- [ ] Bullet text matches slide-plan.md — no content was lost or invented during code translation
-- [ ] Bullet levels are encoded as real indentation levels (not literal leading spaces)
-- [ ] No polite verb endings slipped in (습니다/합니다/됩니다)
-- [ ] Visual elements have correct data (labels, values match visual-spec.md)
-- [ ] No placeholder text remains (XXXX, lorem, TBD without gray dashed border)
-
-Fix any failures, then proceed to Phase 2. Do NOT review for depth, narrative, or persuasiveness — that is Slide-Assayer's responsibility.
+5. Post-Code Mechanical Scan 실행 — 체크리스트는 slide-anvil 스킬의 Phase 2 참조. 의미 품질(depth, narrative)은 검토하지 말 것 (Assayer 책임).
 
 ### Phase 2: QA
 
-**Assume there are problems. Your job is to find them.**
+slide-anvil 스킬의 QA 섹션(Content QA → Visual QA → Visual Inspection Checklist)을 따를 것.
 
-#### Content QA
-
-```bash
-uv run python -m markitdown .slide-forge/build/output.pptx
-```
-
-Check:
-- Missing content, typos, wrong order vs slide-plan.md
-- **Polite endings that slipped in** (search for 습니다, 합니다, 됩니다)
-- **Flat bullet lists** without hierarchy (should have main + sub levels)
-- Leftover placeholder text: `uv run python -m markitdown .slide-forge/build/output.pptx | grep -iE "xxxx|lorem|ipsum"`
-
-#### Visual QA
-
-**You MUST render slides to images and read every image file.** Never skip this — code alone cannot tell you if the output looks correct.
-
-```bash
-uv run slide-forge render .slide-forge/build/output.pptx .slide-forge/build/rendered/
-```
-
-Then **read each PNG file** (e.g., `.slide-forge/build/rendered/slide-01.png`) and inspect visually. Use subagents for fresh eyes — even for 2-3 slides.
-
-#### Visual Inspection Checklist (per slide image)
-
-**레이아웃 문제:**
-- 텍스트가 박스/슬라이드 밖으로 넘치지 않는가?
-- 요소들이 겹치지 않는가? (텍스트 위에 도형, 라인이 글자를 가로지름)
-- 상하 구도가 지켜지는가? (위 = 텍스트, 아래 = 시각 자료)
-- 여백이 충분한가? (슬라이드 가장자리 0.5" 이상)
-
-**시각 자료 품질:**
-- 차트/다이어그램이 실제로 렌더링되었는가? (빈 공간이면 코드 오류)
-- 라벨이 읽히는 크기인가? (너무 작으면 확대해도 읽히지 않음)
-- 색상이 Slide Forge 팔레트를 따르는가?
-- **시각 자료가 텍스트 내용을 보충하는가, 단순 반복하는가?**
-
-**타이포그래피:**
-- 폰트 크기가 일관적인가? (같은 계층의 불릿이 같은 크기)
-- 타이틀이 너무 크거나 작지 않은가?
-- 볼드/일반이 적절히 구분되는가?
-
-#### Verification (1 Round)
-
-```
-1. 코드 생성 완료 → PPTX 생성 → 이미지 렌더링
-2. 모든 슬라이드 이미지를 읽고(Read) 위 체크리스트로 검사
-3. 발견된 레이아웃/타이포 문제만 수정 → PPTX 재생성
-4. 외부 critics (Gauge + Assayer + Wanderer)에게 제출
-```
-
-**1회 렌더링 + 1회 수정까지만.** 추가 반복은 critic 피드백 후에 수행한다. Smith가 자체적으로 무한 루프를 돌지 않는다.
-
-**절대 이미지를 읽지 않고 "문제 없음"이라 선언하지 말 것.** 이미지 파일을 Read tool로 직접 열어서 눈으로 확인해야만 Visual QA가 완료된다.
+**필수 규칙:**
+- **1회 렌더링 + 1회 수정까지만.** 추가 반복은 critic 피드백 후에 수행.
+- **절대 이미지를 읽지 않고 "문제 없음"이라 선언하지 말 것.** 이미지 파일을 Read tool로 직접 열어서 확인해야 Visual QA 완료.
 
 ## Responding to Critic Feedback (Iteration)
 
@@ -217,12 +148,3 @@ When tool or script failures occur during Build/QA:
 
 **General rule**: diagnose → fix → retry (max 3 attempts per error). If stuck after 3 retries, report the error with the error message and what was attempted.
 
-## What You Must NOT Do
-
-- **Do NOT analyze source documents** or collect research materials.
-- **Do NOT write narrative prose** or plan slide content from scratch.
-- **Do NOT read `narrative-full.md`** — your only content inputs are `slide-plan.md` and `visual-spec.md`.
-- **Do NOT modify bullet content** beyond what critics instruct — the Storyteller owns content decisions.
-- **Do NOT respond to Crucible feedback** — that is the Storyteller's responsibility.
-- **Do NOT skip Visual QA** — every rendered image must be inspected.
-- **Do NOT self-iterate more than 1 round** before submitting to critics.

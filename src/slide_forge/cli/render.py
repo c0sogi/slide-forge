@@ -62,7 +62,8 @@ def _pdf_to_images(pdf_path: str, output_dir: str, dpi: int = 150) -> list[str]:
     os.makedirs(output_dir, exist_ok=True)
     doc = fitz.open(pdf_path)
     paths = []
-    for i, page in enumerate(doc):
+    for i in range(len(doc)):
+        page = doc[i]
         pix = page.get_pixmap(dpi=dpi)
         img_path = os.path.join(output_dir, f"slide-{i + 1:02d}.png")
         pix.save(img_path)

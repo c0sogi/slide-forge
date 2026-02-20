@@ -6,7 +6,7 @@ at runtime and applies an LD_PRELOAD shim if needed.
 from __future__ import annotations
 
 import os
-import socket
+import sys
 import subprocess
 import tempfile
 from pathlib import Path
@@ -32,6 +32,10 @@ _SHIM_SO = Path(tempfile.gettempdir()) / "lo_socket_shim.so"
 
 
 def _needs_shim() -> bool:
+    if sys.platform == "win32":
+        return False
+    import socket
+
     try:
         s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         s.close()

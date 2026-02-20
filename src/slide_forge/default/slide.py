@@ -1309,6 +1309,332 @@ def add_chart(
     return chart
 
 
+# ─── visual area (auto-layout container) ────────────────────
+
+_VISUAL_TOP_GAP = Emu(100_000)  # gap between content box bottom and visual area top
+_VISUAL_GAP = Emu(150_000)  # horizontal gap between elements (~0.17")
+_VISUAL_BOTTOM_MARGIN = Emu(258_000)  # bottom margin from slide edge
+
+
+class VisualArea:
+    """Auto-layout container that arranges visual elements in a horizontal row.
+
+    Elements are collected via :meth:`add_chart`, :meth:`add_table`,
+    :meth:`add_figure`, and :meth:`add_shape`, then placed all at once
+    when :meth:`render` is called.
+    """
+
+    def __init__(
+        self,
+        slide: Slide,
+        *,
+        left: int,
+        top: int,
+        width: int,
+        height: int,
+        gap: int,
+    ) -> None:
+        self._slide = slide
+        self._left = int(left)
+        self._top = int(top)
+        self._width = int(width)
+        self._height = int(height)
+        self._gap = int(gap)
+        self._elements: list[dict] = []
+        self._rendered = False
+
+    # ── element collectors ──────────────────────────────────
+
+    def _guard_add(self, weight: float) -> None:
+        if self._rendered:
+            raise RuntimeError("render() 호출 후에는 요소를 추가할 수 없습니다.")
+        if weight <= 0:
+            raise ValueError("weight는 0보다 커야 합니다.")
+
+    def add_chart(
+        self,
+        chart_type: str,
+        *,
+        weight: float = 1.0,
+        categories: Sequence[str] | None = None,
+        series: dict[str, Sequence] | Sequence | None = None,
+        title: str | None = None,
+        legend: bool = True,
+        colors: "Sequence[Color] | None" = None,
+        number_format: str | None = None,
+        caption: str | None = None,
+    ) -> "VisualArea":
+        """Add a chart element to the container."""
+        self._guard_add(weight)
+        self._elements.append({
+            "kind": "chart",
+            "weight": weight,
+            "kwargs": {
+                "chart_type": chart_type,
+                "categories": categories,
+                "series": series,
+                "title": title,
+                "legend": legend,
+                "colors": colors,
+                "number_format": number_format,
+                "caption": caption,
+            },
+        })
+        return self
+
+    def add_table(
+        self,
+        data: list[list[str]],
+        *,
+        weight: float = 1.0,
+        col_widths: list[int] | None = None,
+        first_row: bool = True,
+        first_col: bool = False,
+        header_size: int = 14,
+        body_size: int = 12,
+        header_fill: "Color" = _TBL_HEADER_FILL,
+        first_col_fill: "Color" = _TBL_FIRST_COL_FILL,
+        text_color: "Color" = _TBL_TEXT_COLOR,
+        border_color: "Color" = _TBL_BORDER_COLOR,
+        border_width: int = _TBL_BORDER_WIDTH,
+        align: PP_ALIGN = PP_ALIGN.CENTER,
+        caption: str | None = None,
+    ) -> "VisualArea":
+        """Add a table element to the container."""
+        self._guard_add(weight)
+        self._elements.append({
+            "kind": "table",
+            "weight": weight,
+            "kwargs": {
+                "data": data,
+                "col_widths": col_widths,
+                "first_row": first_row,
+                "first_col": first_col,
+                "header_size": header_size,
+                "body_size": body_size,
+                "header_fill": header_fill,
+                "first_col_fill": first_col_fill,
+                "text_color": text_color,
+                "border_color": border_color,
+                "border_width": border_width,
+                "align": align,
+                "caption": caption,
+            },
+        })
+        return self
+
+    def add_figure(
+        self,
+        image_path: str,
+        *,
+        weight: float = 1.0,
+        caption: str | None = None,
+    ) -> "VisualArea":
+        """Add an image element to the container."""
+        self._guard_add(weight)
+        self._elements.append({
+            "kind": "figure",
+            "weight": weight,
+            "kwargs": {
+                "image_path": image_path,
+                "caption": caption,
+            },
+        })
+        return self
+
+    def add_shape(
+        self,
+        shape_type: str,
+        *,
+        weight: float = 1.0,
+        fill: "Color | None" = None,
+        transparency: int = 0,
+        line_color: "Color | None" = None,
+        line_width: int = 1,
+        line_dash: str | None = None,
+        shadow: dict | None = None,
+        text: str | None = None,
+        font_size: int = 12,
+        color: "Color | None" = None,
+        bold: bool = False,
+        align: PP_ALIGN = PP_ALIGN.CENTER,
+        valign: str = "middle",
+    ) -> "VisualArea":
+        """Add a shape element to the container."""
+        self._guard_add(weight)
+        self._elements.append({
+            "kind": "shape",
+            "weight": weight,
+            "kwargs": {
+                "shape_type": shape_type,
+                "fill": fill,
+                "transparency": transparency,
+                "line_color": line_color,
+                "line_width": line_width,
+                "line_dash": line_dash,
+                "shadow": shadow,
+                "text": text,
+                "font_size": font_size,
+                "color": color,
+                "bold": bold,
+                "align": align,
+                "valign": valign,
+            },
+        })
+        return self
+
+    # ── rendering ───────────────────────────────────────────
+
+    def render(self) -> list:
+        """Calculate positions and place all elements on the slide.
+
+        Returns a list of placed objects (Chart, Table, Picture, Shape).
+        Can only be called once.
+        """
+        if self._rendered:
+            raise RuntimeError("VisualArea.render()는 한 번만 호출할 수 있습니다.")
+        self._rendered = True
+
+        n = len(self._elements)
+        if n == 0:
+            return []
+
+        caption_reserve = int(_CAPTION_GAP) + int(_CAPTION_BOX_HEIGHT)
+
+        total_weight = sum(e["weight"] for e in self._elements)
+        total_gap = self._gap * (n - 1)
+        available_width = self._width - total_gap
+
+        results: list = []
+        cursor_left = self._left
+
+        for i, elem in enumerate(self._elements):
+            if i == n - 1:
+                elem_width = (self._left + self._width) - cursor_left
+            else:
+                elem_width = int(available_width * (elem["weight"] / total_weight))
+
+            if elem["kwargs"].get("caption"):
+                elem_height = self._height - caption_reserve
+            else:
+                elem_height = self._height
+
+            result = self._place_element(elem, cursor_left, self._top, elem_width, elem_height)
+            results.append(result)
+            cursor_left += elem_width + self._gap
+
+        return results
+
+    def _place_element(self, elem: dict, left: int, top: int, width: int, height: int):
+        """Dispatch to the appropriate ``add_*`` function."""
+        kind = elem["kind"]
+        kw = elem["kwargs"]
+
+        if kind == "chart":
+            return add_chart(
+                self._slide,
+                kw["chart_type"],
+                categories=kw["categories"],
+                series=kw["series"],
+                left=left,
+                top=top,
+                width=width,
+                height=height,
+                title=kw["title"],
+                legend=kw["legend"],
+                colors=kw["colors"],
+                number_format=kw["number_format"],
+                caption=kw["caption"],
+            )
+        elif kind == "table":
+            return add_table(
+                self._slide,
+                kw["data"],
+                left=left,
+                top=top,
+                width=width,
+                col_widths=kw["col_widths"],
+                first_row=kw["first_row"],
+                first_col=kw["first_col"],
+                header_size=kw["header_size"],
+                body_size=kw["body_size"],
+                header_fill=kw["header_fill"],
+                first_col_fill=kw["first_col_fill"],
+                text_color=kw["text_color"],
+                border_color=kw["border_color"],
+                border_width=kw["border_width"],
+                align=kw["align"],
+                caption=kw["caption"],
+            )
+        elif kind == "figure":
+            return add_figure(
+                self._slide,
+                kw["image_path"],
+                left=left,
+                top=top,
+                width=width,
+                caption=kw["caption"],
+            )
+        elif kind == "shape":
+            return add_shape(
+                self._slide,
+                kw["shape_type"],
+                left=left,
+                top=top,
+                width=width,
+                height=height,
+                fill=kw["fill"],
+                transparency=kw["transparency"],
+                line_color=kw["line_color"],
+                line_width=kw["line_width"],
+                line_dash=kw["line_dash"],
+                shadow=kw["shadow"],
+                text=kw["text"],
+                font_size=kw["font_size"],
+                color=kw["color"],
+                bold=kw["bold"],
+                align=kw["align"],
+                valign=kw["valign"],
+            )
+        else:
+            raise ValueError(f"Unknown element kind: {kind!r}")
+
+
+def visual_area(
+    slide: Slide,
+    *,
+    left: int = _CONTENT_LEFT,
+    top: int | None = None,
+    width: int = _CONTENT_WIDTH,
+    height: int | None = None,
+    gap: int = _VISUAL_GAP,
+) -> VisualArea:
+    """Create a :class:`VisualArea` for auto-layout of visual elements.
+
+    Parameters
+    ----------
+    slide : Slide
+        Target slide.
+    left : int
+        Left edge in EMU (default: content box left).
+    top : int, optional
+        Top edge in EMU.  Defaults to content box bottom + gap.
+    width : int
+        Width in EMU (default: content box width).
+    height : int, optional
+        Height in EMU.  Defaults to fill to bottom margin.
+    gap : int
+        Horizontal gap between elements (default ~0.17").
+    """
+    if top is None:
+        top = int(_CONTENT_TOP) + int(_CONTENT_HEIGHT) + int(_VISUAL_TOP_GAP)
+    if height is None:
+        height = 6_858_000 - int(_VISUAL_BOTTOM_MARGIN) - int(top)
+    return VisualArea(
+        slide, left=int(left), top=int(top), width=int(width), height=int(height), gap=int(gap)
+    )
+
+
 # ─── cover slide helpers ─────────────────────────────────────
 
 

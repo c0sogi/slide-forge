@@ -1,4 +1,4 @@
-"""Bump version across pyproject.toml, plugin.json, and __init__.py.
+"""Bump version across pyproject.toml, plugin.json, __init__.py, and slide-forge-api.md.
 
 Usage:
     slide-forge bump-version 1.3.0
@@ -47,6 +47,7 @@ def _get_targets(root: Path) -> dict[str, Path]:
         "pyproject": root / "pyproject.toml",
         "plugin": root / "plugins" / "slide-forge" / ".claude-plugin" / "plugin.json",
         "init": root / "src" / "slide_forge" / "__init__.py",
+        "api_doc": root / "plugins" / "slide-forge" / "skills" / "slide-anvil" / "slide-forge-api.md",
     }
 
 
@@ -75,6 +76,13 @@ def bump(version: str, root: Path) -> None:
     path = targets["init"]
     text = path.read_text(encoding="utf-8")
     text = re.sub(r'__version__\s*=\s*"[^"]+"', f'__version__ = "{version}"', text)
+    path.write_text(text, encoding="utf-8")
+    print(f"  Updated {path.relative_to(root)}")
+
+    # slide-forge-api.md (PEP 723 dependency pins)
+    path = targets["api_doc"]
+    text = path.read_text(encoding="utf-8")
+    text = re.sub(r'# dependencies = \["slide-forge[^"]*"\]', f'# dependencies = ["slide-forge=={version}"]', text)
     path.write_text(text, encoding="utf-8")
     print(f"  Updated {path.relative_to(root)}")
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
+from typing import cast
 
 import defusedxml.minidom
 import lxml.etree
@@ -156,7 +157,7 @@ class BaseSchemaValidator:
                 root = lxml.etree.parse(str(xml_file)).getroot()
                 declared = set(root.nsmap.keys()) - {None}
 
-                for attr_val in [v for k, v in root.attrib.items() if k.endswith("Ignorable")]:
+                for attr_val in [v for k, v in root.attrib.items() if str(k).endswith("Ignorable")]:
                     undeclared = set(attr_val.split()) - declared
                     errors.extend(
                         f"  {xml_file.relative_to(self.unpacked_dir)}: Namespace '{ns}' in Ignorable but not declared"
@@ -183,9 +184,14 @@ class BaseSchemaValidator:
                 root = lxml.etree.parse(str(xml_file)).getroot()
                 file_ids: dict[tuple, dict] = {}
 
-                mc_elements = root.xpath(".//mc:AlternateContent", namespaces={"mc": self.MC_NAMESPACE})
+                mc_elements = cast(
+                    list[lxml.etree._Element],
+                    root.xpath(".//mc:AlternateContent", namespaces={"mc": self.MC_NAMESPACE}),
+                )
                 for elem in mc_elements:
-                    elem.getparent().remove(elem)
+                    parent = elem.getparent()
+                    if parent is not None:
+                        parent.remove(elem)
 
                 for elem in root.iter():
                     tag = elem.tag.split("}")[-1].lower() if "}" in elem.tag else elem.tag.lower()
@@ -202,7 +208,7 @@ class BaseSchemaValidator:
 
                         id_value = None
                         for attr, value in elem.attrib.items():
-                            attr_local = attr.split("}")[-1].lower() if "}" in attr else attr.lower()
+                            attr_local = str(attr).split("}")[-1].lower() if "}" in str(attr) else str(attr).lower()
                             if attr_local == attr_name:
                                 id_value = value
                                 break
@@ -217,7 +223,7 @@ class BaseSchemaValidator:
                                         f"already used in {prev_file} at line {prev_line} in <{prev_tag}>"
                                     )
                                 else:
-                                    global_ids[id_value] = (
+                                    global_ids[str(id_value)] = (
                                         xml_file.relative_to(self.unpacked_dir),
                                         elem.sourceline,
                                         tag,
@@ -625,8 +631,8 @@ class BaseSchemaValidator:
             attrs_to_remove = []
 
             for attr in elem.attrib:
-                if "{" in attr:
-                    ns = attr.split("}")[0][1:]
+                if "{" in str(attr):
+                    ns = str(attr).split("}")[0][1:]
                     if ns not in self.OOXML_NAMESPACES:
                         attrs_to_remove.append(attr)
 
@@ -691,7 +697,7 @@ class BaseSchemaValidator:
                 return True, set()
             else:
                 errors = set()
-                for error in schema.error_log:
+                for error in cast(list[lxml.etree._LogEntry], schema.error_log):
                     errors.add(error.message)
                 return False, errors
 

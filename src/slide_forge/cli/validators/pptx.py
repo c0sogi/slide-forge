@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 import re
 
 import lxml.etree
@@ -70,10 +71,10 @@ class PPTXSchemaValidator(BaseSchemaValidator):
 
                 for elem in root.iter():
                     for attr, value in elem.attrib.items():
-                        attr_name = attr.split("}")[-1].lower()
+                        attr_name = str(attr).split("}")[-1].lower()
                         if attr_name == "id" or attr_name.endswith("id"):
-                            if self._looks_like_uuid(value):
-                                if not uuid_pattern.match(value):
+                            if self._looks_like_uuid(str(value)):
+                                if not uuid_pattern.match(str(value)):
                                     errors.append(
                                         f"  {xml_file.relative_to(self.unpacked_dir)}: "
                                         f"Line {elem.sourceline}: ID '{value}' appears to be a UUID but contains invalid hex characters"
@@ -186,7 +187,7 @@ class PPTXSchemaValidator(BaseSchemaValidator):
 
     def validate_notes_slide_references(self) -> bool:
         errors = []
-        notes_slide_references: dict[str, list[tuple[str, object]]] = {}
+        notes_slide_references: dict[str, list[tuple[str, Path]]] = {}
 
         slide_rels_files = list(self.unpacked_dir.glob("ppt/slides/_rels/*.xml.rels"))
 

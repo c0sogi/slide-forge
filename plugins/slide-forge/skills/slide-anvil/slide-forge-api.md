@@ -7,17 +7,14 @@ slide-forge is a Python library. Write a `.py` file with **PEP 723 inline metada
 ```python
 # /// script
 # requires-python = ">=3.12"
-# dependencies = ["slide-forge"]
-#
-# [tool.uv.sources]
-# slide-forge = { path = "../../" }
+# dependencies = ["slide-forge==1.2.0"]
 # ///
 
 from slide_forge import (
     get_presentation, create_slide, create_cover_slide,
     add_slide_title, add_content_box,
     add_section, add_bullet, add_spacer,
-    add_shape, add_line,
+    add_shape, add_line, visual_area,
 )
 from slide_forge.default.slide import add_table, add_chart, add_figure, add_cover_title, add_cover_info
 
@@ -29,8 +26,8 @@ prs.save("output.pptx")
 ```
 
 ```bash
-# Run the script (uv resolves dependencies automatically)
-uv run create_slides.py
+# uv resolves slide-forge from PyPI automatically — works in any directory
+uv run .slide-forge/build/create_slides.py
 ```
 
 The script uses the built-in Slide Forge template (`template.pptx`) which provides two slide masters:
@@ -498,6 +495,145 @@ add_figure(slide, "architecture.png",
 
 ---
 
+## Visual Area (Auto-Layout)
+
+### visual_area(slide, *, ...)
+
+Create a `VisualArea` container that auto-arranges visual elements in a horizontal row. **Use this instead of manually calculating EMU coordinates for charts, tables, figures, and shapes in the bottom portion of a slide.**
+
+```python
+from slide_forge import visual_area
+
+# Simple: two charts side by side (equal width)
+area = visual_area(slide)
+area.add_chart("column",
+    categories=["J1", "J2", "J3"],
+    series={"R²": [93.5, 23.2, 91.8]},
+    title="Per-Joint R²")
+area.add_table(
+    [["Joint", "MAE", "RMSE"],
+     ["J1", "0.012", "0.018"],
+     ["J2", "0.089", "0.102"]],
+    first_row=True)
+area.render()
+```
+
+**Parameters:**
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `slide` | Slide | required | Target slide |
+| `left` | int | 166261 | Left edge (EMU) |
+| `top` | int \| None | None | Top edge (EMU). None = below content box |
+| `width` | int | 8870234 | Width (EMU) |
+| `height` | int \| None | None | Height (EMU). None = fill to bottom margin |
+| `gap` | int | 150000 | Horizontal gap between elements (EMU) |
+
+**Returns:** `VisualArea` container. Call `.render()` after adding all elements.
+
+### VisualArea Methods
+
+All `add_*` methods return `self` for optional chaining. Each method accepts a `weight` parameter (default 1.0) that controls relative width proportions.
+
+#### .add_chart(chart_type, *, weight, ...)
+
+Same parameters as `add_chart()` except `left`, `top`, `width`, `height` (calculated by the container). Chart receives the container-allocated height.
+
+#### .add_table(data, *, weight, ...)
+
+Same parameters as `add_table()` except `left`, `top`, `width`, `height`. Table auto-sizes its height (height=None).
+
+#### .add_figure(image_path, *, weight, ...)
+
+Same parameters as `add_figure()` except `left`, `top`, `width`, `height`. Figure preserves aspect ratio (height=None).
+
+#### .add_shape(shape_type, *, weight, ...)
+
+Same parameters as `add_shape()` except `left`, `top`, `width`, `height`. Shape receives the container-allocated height.
+
+#### .render() → list
+
+Calculate positions and place all elements on the slide. Returns a list of placed objects (Chart, Table, Picture, Shape). **Must be called exactly once.**
+
+### Weight System
+
+The `weight` parameter controls relative width proportions. Default is 1.0 for all elements (equal split).
+
+```python
+# 2:1 ratio — chart gets 2/3 width, table gets 1/3
+area = visual_area(slide)
+area.add_chart("line_markers",
+    categories=["W1", "W2", "W3", "W4"],
+    series={"Acc": [85.2, 87.1, 89.5, 91.0]},
+    weight=2,
+    title="Training Progress")
+area.add_table(
+    [["Metric", "Value"], ["Best Epoch", "47"], ["LR", "1e-4"]],
+    weight=1,
+    first_row=True)
+area.render()
+```
+
+### Caption Support
+
+Charts, tables, and figures accept an optional `caption` parameter. Elements with captions automatically get reduced height to make room for the caption text below.
+
+```python
+area = visual_area(slide)
+area.add_chart("pie",
+    categories=["Normal", "Anomaly"],
+    series={"": [92.3, 7.7]},
+    caption="[Figure 1] Detection Ratio")
+area.add_figure("results/confusion_matrix.png",
+    caption="[Figure 2] Confusion Matrix")
+area.render()
+```
+
+### Examples
+
+```python
+# Single chart (full width)
+area = visual_area(slide)
+area.add_chart("column",
+    categories=["J1", "J2", "J3", "J4", "J5", "J6"],
+    series={"R²": [93.5, 23.2, 91.8, 45.6, 78.9, 95.1]},
+    title="Per-Joint R² Score",
+    legend=False,
+    caption="[Figure 1] Joint별 예측 정확도")
+area.render()
+
+# Three elements across
+area = visual_area(slide)
+area.add_chart("pie",
+    categories=["Normal", "Anomaly"],
+    series={"": [92.3, 7.7]},
+    title="Detection Ratio")
+area.add_chart("column",
+    categories=["J1", "J2", "J3"],
+    series={"F1": [90.1, 45.2, 88.7]},
+    title="Per-Joint F1")
+area.add_figure("results/confusion_matrix.png",
+    caption="[Figure 2] Confusion Matrix")
+area.render()
+
+# Custom position (when content box has non-default height)
+tf = add_content_box(slide, height=2000000)
+area = visual_area(slide, top=724090 + 2000000 + 100000)
+area.add_chart("column",
+    categories=["A", "B", "C"],
+    series={"S": [1, 2, 3]})
+area.render()
+```
+
+### Important Notes
+
+1. **Call `.render()` exactly once** — forgetting it means no elements appear; calling twice raises `RuntimeError`.
+2. **`weight` must be > 0** — zero or negative values raise `ValueError`.
+3. **4 elements max recommended** — 5+ elements may be too narrow to read.
+4. **Shapes don't support captions** — only charts, tables, and figures have caption support.
+5. **Existing `add_*()` functions still work** — `visual_area` is purely additive. Use direct `add_chart(slide, ..., left=X, top=Y)` calls when you need precise manual positioning.
+
+---
+
 ## Section Header Bar (▌ Accent)
 
 The section header with ▌ accent is built using `add_section()` inside a content box. For custom section headers using shapes:
@@ -586,10 +722,7 @@ Emu(914400) # direct EMU value
 ```python
 # /// script
 # requires-python = ">=3.12"
-# dependencies = ["slide-forge"]
-#
-# [tool.uv.sources]
-# slide-forge = { path = "../../" }
+# dependencies = ["slide-forge==1.2.0"]
 # ///
 
 from pptx.util import Inches, Emu
@@ -659,3 +792,36 @@ prs.save("output.pptx")
 8. **`add_figure` height=None preserves aspect ratio** — only pass `height` when you need a specific size.
 
 9. **Import paths** — core functions are in `slide_forge` (top-level). Extended functions (`add_table`, `add_chart`, `add_figure`, `add_cover_title`, `add_cover_info`) are in `slide_forge.default.slide`.
+
+---
+
+## Advanced Patterns
+
+### Table Cell-Level Formatting
+
+`add_table()` returns a `Table` object. For cell-level customization (conditional highlighting, per-cell colours), access cells directly after creation:
+
+```python
+from lxml import etree
+from pptx.oxml.ns import qn
+
+table = add_table(slide, data, left=457200, top=3200400, width=8229600, first_row=True)
+
+# Highlight a specific cell (e.g., low-score value in red)
+cell = table.cell(2, 1)  # row 2, col 1 (0-indexed)
+tc = cell._tc
+tcPr = tc.find(qn("a:tcPr"))
+if tcPr is None:
+    tcPr = etree.SubElement(tc, qn("a:tcPr"))
+
+# Remove existing fill if any
+for old_fill in tcPr.findall(qn("a:solidFill")) + tcPr.findall(qn("a:noFill")):
+    tcPr.remove(old_fill)
+
+# Set red background
+sf = etree.SubElement(tcPr, qn("a:solidFill"))
+clr = etree.SubElement(sf, qn("a:srgbClr"))
+clr.set("val", "C00000")
+```
+
+**When to use:** visual-spec.md specifies conditional formatting (e.g., "낮은 점수 셀 빨간색 배경"). For simple header/column highlighting, use `add_table()`'s built-in `first_row` / `first_col` parameters instead.

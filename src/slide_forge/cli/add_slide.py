@@ -13,10 +13,14 @@ import argparse
 import sys
 from copy import deepcopy
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from pptx import Presentation
 
 from slide_forge import create_cover_slide, create_slide
+
+if TYPE_CHECKING:
+    from pptx.presentation import Presentation as _Presentation
 
 _R_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
 
@@ -46,7 +50,7 @@ def configure_parser(subparsers: argparse._SubParsersAction) -> None:
     parser.set_defaults(func=_run)
 
 
-def _duplicate_slide(prs: Presentation, source_index: int) -> None:
+def _duplicate_slide(prs: _Presentation, source_index: int) -> None:
     """Duplicate the slide at 1-based *source_index*, appending the copy at the end."""
     slides = prs.slides
     if source_index < 1 or source_index > len(slides):
