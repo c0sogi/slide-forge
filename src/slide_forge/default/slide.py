@@ -1,3 +1,5 @@
+import re
+
 from lxml import etree
 from pptx.dml.color import RGBColor
 from pptx.oxml.ns import qn
@@ -59,8 +61,57 @@ _L1_COLOR = RGBColor(0x40, 0x40, 0x40)
 # ── Caption ──────────────────────────────────────────────────
 _CAPTION_SIZE = Emu(133350)  # ≈ 10.5 pt
 
+# ── Inline color tags ────────────────────────────────────────
+_COLOR_TAG_RE = re.compile(r"\[(#[0-9A-Fa-f]{6}|\w+)\](.*?)\[/\1\]")
+
+_COLOR_MAP: dict[str, RGBColor] = {
+    "red": RGBColor(0xC0, 0x00, 0x00),
+    "green": RGBColor(0x00, 0x80, 0x00),
+    "blue": RGBColor(0x00, 0x70, 0xC0),
+    "orange": RGBColor(0xFF, 0x7F, 0x00),
+    "purple": RGBColor(0x80, 0x00, 0x80),
+    "navy": RGBColor(0x07, 0x2A, 0x5E),
+    "teal": RGBColor(0x00, 0x80, 0x80),
+    "gray": RGBColor(0x80, 0x80, 0x80),
+    "grey": RGBColor(0x80, 0x80, 0x80),
+}
+
 
 # ─── internal helpers ────────────────────────────────────────
+
+
+def _resolve_color(name: str) -> RGBColor | None:
+    """Resolve a color name or ``#RRGGBB`` hex code to :class:`RGBColor`."""
+    if name.startswith("#") and len(name) == 7:
+        try:
+            return RGBColor(int(name[1:3], 16), int(name[3:5], 16), int(name[5:7], 16))
+        except ValueError:
+            return None
+    return _COLOR_MAP.get(name.lower())
+
+
+def _parse_color_tags(text: str) -> list[tuple[str, RGBColor | None]]:
+    """Parse ``[color]text[/color]`` inline markup.
+
+    Returns ``[(text, color_override), ...]``.
+    *color_override* is ``None`` for untagged portions.
+    Unknown color names are left as literal text (tags preserved).
+    """
+    segments: list[tuple[str, RGBColor | None]] = []
+    last_end = 0
+    for m in _COLOR_TAG_RE.finditer(text):
+        color = _resolve_color(m.group(1))
+        if color is None:
+            continue  # unknown color — keep tags as literal text
+        if m.start() > last_end:
+            segments.append((text[last_end : m.start()], None))
+        segments.append((m.group(2), color))
+        last_end = m.end()
+    if last_end < len(text):
+        segments.append((text[last_end:], None))
+    if not segments:
+        segments.append((text, None))
+    return segments
 
 
 def _is_ascii(ch: str) -> bool:
@@ -137,15 +188,22 @@ def _add_runs(
     ascii_bold: bool = True,
     unicode_bold: bool = False,
 ) -> None:
-    """Add mixed-font runs to *p*, splitting on ASCII / non-ASCII."""
-    for segment, is_ascii in _split_by_script(text):
-        run = p.add_run()
-        run.text = segment
-        run.font.name = ascii_font if is_ascii else ea_font
-        run.font.bold = ascii_bold if is_ascii else unicode_bold
-        run.font.size = size
-        run.font.color.rgb = color
-        _set_ea_font(run, ea_font)
+    """Add mixed-font runs to *p*, splitting on ASCII / non-ASCII.
+
+    Supports ``[color]text[/color]`` inline markup for per-span color
+    overrides.  Named colors (``red``, ``green``, …) and hex codes
+    (``#RRGGBB``) are both accepted.
+    """
+    for seg_text, color_override in _parse_color_tags(text):
+        effective_color = color_override if color_override is not None else color
+        for chunk, is_ascii in _split_by_script(seg_text):
+            run = p.add_run()
+            run.text = chunk
+            run.font.name = ascii_font if is_ascii else ea_font
+            run.font.bold = ascii_bold if is_ascii else unicode_bold
+            run.font.size = size
+            run.font.color.rgb = effective_color
+            _set_ea_font(run, ea_font)
 
 
 def _next_para(tf: TextFrame) -> _Paragraph:

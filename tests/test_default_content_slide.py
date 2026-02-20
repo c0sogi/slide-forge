@@ -15,12 +15,12 @@ add_slide_title(slide, "주행 환경 적응을 위한 Self-Evolving AI")
 
 tf = add_content_box(slide)
 
-add_section(tf, "클라우드 시스템 기반 Continual Learning 선행 연구")
+add_section(tf, "클라우드 시스템 기반 [green]Continual Learning[/green] 선행 연구")
 add_bullet(tf, "[문제 상황] 엣지 모델이 동적 환경 변화에 적응하지 못하는 문제 발생")
 add_bullet(
     tf, "새로 생기는 표지판과 날씨가 달라지면 제한된 리소스를 가진 엣지 환경에서 새로운 데이터 학습 진행", level=1
 )
-add_bullet(tf, "이 학습 과정은 이전 학습 정보를 급격히 잊어버림(Catastrophic Forgetting)", level=1)
+add_bullet(tf, "이 학습 과정은 이전 학습 정보를 급격히 잊어버림([red]Catastrophic Forgetting[/red])", level=1)
 add_spacer(tf)
 
 add_section(tf, "접근법")
