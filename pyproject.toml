@@ -1,6 +1,6 @@
 [project]
 name = "slide-forge"
-version = "0.1.0"
+version = "1.2.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -10,6 +10,9 @@ dependencies = [
     "lxml-stubs>=0.5.1",
     "python-pptx>=1.0.2",
 ]
+
+[project.scripts]
+slide-forge = "slide_forge.cli:main"
 
 [dependency-groups]
 dev = [

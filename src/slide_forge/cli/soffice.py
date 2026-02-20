@@ -1,18 +1,9 @@
-"""
-Helper for running LibreOffice (soffice) in environments where AF_UNIX
+"""Helper for running LibreOffice (soffice) in environments where AF_UNIX
 sockets may be blocked (e.g., sandboxed VMs).  Detects the restriction
 at runtime and applies an LD_PRELOAD shim if needed.
-
-Usage:
-    from office.soffice import run_soffice, get_soffice_env
-
-    # Option 1 – run soffice directly
-    result = run_soffice(["--headless", "--convert-to", "pdf", "input.docx"])
-
-    # Option 2 – get env dict for your own subprocess calls
-    env = get_soffice_env()
-    subprocess.run(["soffice", ...], env=env)
 """
+
+from __future__ import annotations
 
 import os
 import socket
@@ -21,7 +12,7 @@ import tempfile
 from pathlib import Path
 
 
-def get_soffice_env() -> dict:
+def get_soffice_env() -> dict[str, str]:
     env = os.environ.copy()
     env["SAL_USE_VCLPLUGIN"] = "svp"
 
@@ -34,7 +25,7 @@ def get_soffice_env() -> dict:
 
 def run_soffice(args: list[str], **kwargs) -> subprocess.CompletedProcess:
     env = get_soffice_env()
-    return subprocess.run(["soffice"] + args, env=env, **kwargs)
+    return subprocess.run(["soffice", *args], env=env, **kwargs)
 
 
 _SHIM_SO = Path(tempfile.gettempdir()) / "lo_socket_shim.so"
@@ -108,7 +99,7 @@ int socket(int domain, int type, int protocol) {
     if (domain == AF_UNIX) {
         int fd = real_socket(domain, type, protocol);
         if (fd >= 0) return fd;
-        /* socket(AF_UNIX) blocked – fall back to socketpair(). */
+        /* socket(AF_UNIX) blocked - fall back to socketpair(). */
         int sv[2];
         if (real_socketpair(domain, type, protocol, sv) == 0) {
             if (sv[0] >= 0 && sv[0] < 1024) {
@@ -167,15 +158,8 @@ int close(int fd) {
         if (peer_of[fd] >= 0) { real_close(peer_of[fd]); peer_of[fd] = -1; }
 
         if (was_listener)
-            _exit(0);                        /* conversion done – exit */
+            _exit(0);                        /* conversion done - exit */
     }
     return real_close(fd);
 }
 """
-
-
-if __name__ == "__main__":
-    import sys
-
-    result = run_soffice(sys.argv[1:])
-    sys.exit(result.returncode)

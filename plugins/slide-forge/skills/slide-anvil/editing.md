@@ -6,7 +6,7 @@ When using an existing presentation as a template:
 
 1. **Analyze existing slides**:
    ```bash
-   uv run python scripts/thumbnail.py template.pptx
+   uv run slide-forge thumbnail template.pptx
    uv run python -m markitdown template.pptx
    ```
    Review `thumbnails.jpg` to see layouts, and markitdown output to see placeholder text.
@@ -26,86 +26,92 @@ When using an existing presentation as a template:
 
    Match content type to layout style (e.g., key points → bullet slide, team info → multi-column, testimonials → quote slide).
 
-3. **Unpack**: `uv run python scripts/office/unpack.py template.pptx unpacked/`
+3. **Add/duplicate slides** (before unpacking):
+   - Add a blank slide: `uv run slide-forge add-slide template.pptx`
+   - Duplicate an existing slide: `uv run slide-forge add-slide template.pptx --source 3`
+   - Repeat for each slide you need. The copy is appended at the end.
 
-4. **Build presentation** (do this yourself, not with subagents):
+4. **Unpack**: `uv run slide-forge unpack template.pptx unpacked/`
+
+5. **Build presentation** (do this yourself, not with subagents):
    - Delete unwanted slides (remove from `<p:sldIdLst>`)
-   - Duplicate slides you want to reuse (`add_slide.py`)
    - Reorder slides in `<p:sldIdLst>`
-   - **Complete all structural changes before step 5**
+   - **Complete all structural changes before step 6**
 
-5. **Edit content**: Update text in each `slide{N}.xml`.
+6. **Edit content**: Update text in each `slide{N}.xml`.
    **Use subagents here if available** — slides are separate XML files, so subagents can edit in parallel.
 
-6. **Clean**: `uv run python scripts/clean.py unpacked/`
+7. **Clean**: `uv run slide-forge clean unpacked/`
 
-7. **Pack**: `uv run python scripts/office/pack.py unpacked/ output.pptx --original template.pptx`
+8. **Pack**: `uv run slide-forge pack unpacked/ output.pptx --original template.pptx`
 
 ---
 
-## Scripts
+## Commands
 
-| Script | Purpose |
-|--------|---------|
-| `unpack.py` | Extract and pretty-print PPTX |
-| `add_slide.py` | Duplicate slide or create from layout |
-| `clean.py` | Remove orphaned files |
-| `pack.py` | Repack with validation |
-| `thumbnail.py` | Create visual grid of slides |
-| `render_slides.py` | PPTX → PDF → PNG via PowerPoint COM |
+| Command | Purpose |
+|---------|---------|
+| `uv run slide-forge unpack` | Extract and pretty-print PPTX |
+| `uv run slide-forge add-slide` | Add a content or cover slide |
+| `uv run slide-forge clean` | Remove orphaned files |
+| `uv run slide-forge pack` | Repack with validation |
+| `uv run slide-forge thumbnail` | Create visual grid of slides |
+| `uv run slide-forge render` | PPTX → PDF → PNG via PowerPoint COM |
 
-### unpack.py
+### unpack
 
 ```bash
-uv run python scripts/office/unpack.py input.pptx unpacked/
+uv run slide-forge unpack input.pptx unpacked/
 ```
 
 Extracts PPTX, pretty-prints XML, escapes smart quotes.
 
-### add_slide.py
+### add-slide
 
 ```bash
-uv run python scripts/add_slide.py unpacked/ slide2.xml      # Duplicate slide
-uv run python scripts/add_slide.py unpacked/ slideLayout2.xml # From layout
+uv run slide-forge add-slide presentation.pptx
+uv run slide-forge add-slide presentation.pptx --type cover
+uv run slide-forge add-slide presentation.pptx --source 3
+uv run slide-forge add-slide presentation.pptx --source 3 --output updated.pptx
 ```
 
-Prints `<p:sldId>` to add to `<p:sldIdLst>` at desired position.
+Adds a blank slide (content or cover) using the slide-forge template, or duplicates an existing slide with `--source N` (1-based index). The new slide is appended at the end.
 
-### clean.py
+### clean
 
 ```bash
-uv run python scripts/clean.py unpacked/
+uv run slide-forge clean unpacked/
 ```
 
 Removes slides not in `<p:sldIdLst>`, unreferenced media, orphaned rels.
 
-### pack.py
+### pack
 
 ```bash
-uv run python scripts/office/pack.py unpacked/ output.pptx --original input.pptx
+uv run slide-forge pack unpacked/ output.pptx --original input.pptx
 ```
 
 Validates, repairs, condenses XML, re-encodes smart quotes.
 
-### thumbnail.py
+### thumbnail
 
 ```bash
-uv run python scripts/thumbnail.py input.pptx [output_prefix] [--cols N]
+uv run slide-forge thumbnail input.pptx [output_prefix] [--cols N]
 ```
 
 Creates `thumbnails.jpg` with slide filenames as labels. Default 3 columns, max 12 per grid.
 
-**Use for template analysis only** (choosing layouts). For visual QA, use `render_slides.py` to create full-resolution individual slide images — see SKILL.md.
+**Use for template analysis only** (choosing layouts). For visual QA, use `uv run slide-forge render` to create full-resolution individual slide images — see SKILL.md.
 
-### render_slides.py
+### render
 
 ```bash
-uv run python scripts/render_slides.py output.pptx [output_dir] [--dpi 150]
+uv run slide-forge render output.pptx [output_dir] [--dpi 150]
 ```
 
 Converts PPTX to individual slide PNG images using MS PowerPoint COM (PPTX → PDF) + PyMuPDF (PDF → PNG). Creates `slide-01.png`, `slide-02.png`, etc.
 
-**Requires**: `uv add pywin32 pymupdf`
+**Requires**: `pip install pywin32 pymupdf`
 
 ---
 
@@ -115,15 +121,15 @@ Slide order is in `ppt/presentation.xml` → `<p:sldIdLst>`.
 
 **Reorder**: Rearrange `<p:sldId>` elements.
 
-**Delete**: Remove `<p:sldId>`, then run `clean.py`.
+**Delete**: Remove `<p:sldId>`, then run `uv run slide-forge clean`.
 
-**Add**: Use `add_slide.py`. Never manually copy slide files—the script handles notes references, Content_Types.xml, and relationship IDs that manual copying misses.
+**Add/Duplicate**: Use `uv run slide-forge add-slide` (blank) or `uv run slide-forge add-slide --source N` (duplicate). Never manually copy slide files—the command handles relationships and rId mappings that manual copying misses.
 
 ---
 
 ## Editing Content
 
-**Subagents:** If available, use them here (after completing step 4). Each slide is a separate XML file, so subagents can edit in parallel. In your prompt to subagents, include:
+**Subagents:** If available, use them here (after completing step 5). Each slide is a separate XML file, so subagents can edit in parallel. In your prompt to subagents, include:
 - The slide file path(s) to edit
 - **"Use the Edit tool for all changes"**
 - The formatting rules and common pitfalls below

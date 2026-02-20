@@ -1,13 +1,9 @@
 """Unpack PPTX files for editing.
 
 Extracts the ZIP archive and pretty-prints XML files.
-
-Usage:
-    python unpack.py <pptx_file> <output_dir>
-
-Examples:
-    python unpack.py presentation.pptx unpacked/
 """
+
+from __future__ import annotations
 
 import argparse
 import sys
@@ -22,6 +18,21 @@ SMART_QUOTE_REPLACEMENTS = {
     "\u2018": "&#x2018;",
     "\u2019": "&#x2019;",
 }
+
+
+def configure_parser(subparsers: argparse._SubParsersAction) -> None:
+    parser = subparsers.add_parser("unpack", help="Unpack a PPTX file for editing")
+    parser.add_argument("input_file", help="PPTX file to unpack")
+    parser.add_argument("output_directory", help="Output directory")
+    parser.set_defaults(func=_run)
+
+
+def _run(args: argparse.Namespace) -> None:
+    _, message = unpack(args.input_file, args.output_directory)
+    print(message)
+
+    if "Error" in message:
+        sys.exit(1)
 
 
 def unpack(
@@ -75,16 +86,3 @@ def _escape_smart_quotes(xml_file: Path) -> None:
         xml_file.write_text(content, encoding="utf-8")
     except Exception:
         pass
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Unpack a PPTX file for editing")
-    parser.add_argument("input_file", help="PPTX file to unpack")
-    parser.add_argument("output_directory", help="Output directory")
-    args = parser.parse_args()
-
-    _, message = unpack(args.input_file, args.output_directory)
-    print(message)
-
-    if "Error" in message:
-        sys.exit(1)

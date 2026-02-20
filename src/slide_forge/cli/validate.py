@@ -1,16 +1,6 @@
-"""
-Command line tool to validate PowerPoint document XML files against XSD schemas.
+"""Validate PowerPoint document XML files against XSD schemas."""
 
-Usage:
-    python validate.py <path> [--original <original_file>] [--auto-repair]
-
-The first argument can be either:
-- An unpacked directory containing the PPTX XML files
-- A packed .pptx file which will be unpacked to a temp directory
-
-Auto-repair fixes:
-- Missing xml:space="preserve" on text elements with whitespace
-"""
+from __future__ import annotations
 
 import argparse
 import sys
@@ -18,42 +8,42 @@ import tempfile
 import zipfile
 from pathlib import Path
 
-from validators import PPTXSchemaValidator
+from slide_forge.cli.validators import PPTXSchemaValidator
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Validate PowerPoint document XML files")
-    parser.add_argument(
-        "path",
-        help="Path to unpacked directory or packed .pptx file",
-    )
+def configure_parser(subparsers: argparse._SubParsersAction) -> None:
+    parser = subparsers.add_parser("validate", help="Validate PPTX XML against XSD schemas")
+    parser.add_argument("path", help="Path to unpacked directory or packed .pptx file")
     parser.add_argument(
         "--original",
         required=False,
         default=None,
         help="Path to original .pptx file. If omitted, all XSD errors are reported.",
     )
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        action="store_true",
-        help="Enable verbose output",
-    )
+    parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose output")
     parser.add_argument(
         "--auto-repair",
         action="store_true",
         help="Automatically repair common issues (whitespace preservation)",
     )
-    args = parser.parse_args()
+    parser.set_defaults(func=_run)
 
+
+def _run(args: argparse.Namespace) -> None:
     path = Path(args.path)
-    assert path.exists(), f"Error: {path} does not exist"
+    if not path.exists():
+        print(f"Error: {path} does not exist", file=sys.stderr)
+        sys.exit(1)
 
     original_file = None
     if args.original:
         original_file = Path(args.original)
-        assert original_file.is_file(), f"Error: {original_file} is not a file"
-        assert original_file.suffix.lower() == ".pptx", f"Error: {original_file} must be a .pptx file"
+        if not original_file.is_file():
+            print(f"Error: {original_file} is not a file", file=sys.stderr)
+            sys.exit(1)
+        if original_file.suffix.lower() != ".pptx":
+            print(f"Error: {original_file} must be a .pptx file", file=sys.stderr)
+            sys.exit(1)
 
     if path.is_file() and path.suffix.lower() == ".pptx":
         temp_dir = tempfile.mkdtemp()
@@ -61,7 +51,9 @@ def main():
             zf.extractall(temp_dir)
         unpacked_dir = Path(temp_dir)
     else:
-        assert path.is_dir(), f"Error: {path} is not a directory or .pptx file"
+        if not path.is_dir():
+            print(f"Error: {path} is not a directory or .pptx file", file=sys.stderr)
+            sys.exit(1)
         unpacked_dir = path
 
     validators = [
@@ -79,7 +71,3 @@ def main():
         print("All validations PASSED!")
 
     sys.exit(0 if success else 1)
-
-
-if __name__ == "__main__":
-    main()

@@ -1,8 +1,10 @@
-"""
-Validator for PowerPoint presentation XML files against XSD schemas.
-"""
+"""Validator for PowerPoint presentation XML files against XSD schemas."""
+
+from __future__ import annotations
 
 import re
+
+import lxml.etree
 
 from .base import BaseSchemaValidator
 
@@ -19,7 +21,7 @@ class PPTXSchemaValidator(BaseSchemaValidator):
         "tablestyleid": "tablestyles",
     }
 
-    def validate(self):
+    def validate(self) -> bool:
         if not self.validate_xml():
             return False
 
@@ -56,9 +58,7 @@ class PPTXSchemaValidator(BaseSchemaValidator):
 
         return all_valid
 
-    def validate_uuid_ids(self):
-        import lxml.etree
-
+    def validate_uuid_ids(self) -> bool:
         errors = []
         uuid_pattern = re.compile(
             r"^[\{\(]?[0-9A-Fa-f]{8}-?[0-9A-Fa-f]{4}-?[0-9A-Fa-f]{4}-?[0-9A-Fa-f]{4}-?[0-9A-Fa-f]{12}[\}\)]?$"
@@ -92,13 +92,11 @@ class PPTXSchemaValidator(BaseSchemaValidator):
                 print("PASSED - All UUID-like IDs contain valid hex values")
             return True
 
-    def _looks_like_uuid(self, value):
+    def _looks_like_uuid(self, value: str) -> bool:
         clean_value = value.strip("{}()").replace("-", "")
         return len(clean_value) == 32 and all(c.isalnum() for c in clean_value)
 
-    def validate_slide_layout_ids(self):
-        import lxml.etree
-
+    def validate_slide_layout_ids(self) -> bool:
         errors = []
 
         slide_masters = list(self.unpacked_dir.glob("ppt/slideMasters/*.xml"))
@@ -123,7 +121,7 @@ class PPTXSchemaValidator(BaseSchemaValidator):
 
                 rels_root = lxml.etree.parse(str(rels_file)).getroot()
 
-                valid_layout_rids = set()
+                valid_layout_rids: set[str | None] = set()
                 for rel in rels_root.findall(f".//{{{self.PACKAGE_RELATIONSHIPS_NAMESPACE}}}Relationship"):
                     rel_type = rel.get("Type", "")
                     if "slideLayout" in rel_type:
@@ -154,9 +152,7 @@ class PPTXSchemaValidator(BaseSchemaValidator):
                 print("PASSED - All slide layout IDs reference valid slide layouts")
             return True
 
-    def validate_no_duplicate_slide_layouts(self):
-        import lxml.etree
-
+    def validate_no_duplicate_slide_layouts(self) -> bool:
         errors = []
         slide_rels_files = list(self.unpacked_dir.glob("ppt/slides/_rels/*.xml.rels"))
 
@@ -188,11 +184,9 @@ class PPTXSchemaValidator(BaseSchemaValidator):
                 print("PASSED - All slides have exactly one slideLayout reference")
             return True
 
-    def validate_notes_slide_references(self):
-        import lxml.etree
-
+    def validate_notes_slide_references(self) -> bool:
         errors = []
-        notes_slide_references = {}
+        notes_slide_references: dict[str, list[tuple[str, object]]] = {}
 
         slide_rels_files = list(self.unpacked_dir.glob("ppt/slides/_rels/*.xml.rels"))
 
@@ -240,7 +234,3 @@ class PPTXSchemaValidator(BaseSchemaValidator):
             if self.verbose:
                 print("PASSED - All notes slide references are unique")
             return True
-
-
-if __name__ == "__main__":
-    raise RuntimeError("This module should not be run directly.")

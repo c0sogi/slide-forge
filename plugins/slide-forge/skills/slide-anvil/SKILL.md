@@ -11,7 +11,7 @@ description: "Create or edit PowerPoint (.pptx) presentations in Slide Forge lab
 |------|-------|
 | Read/analyze content | `uv run python -m markitdown presentation.pptx` |
 | Edit or create from template | Read [editing.md](editing.md) |
-| Create from scratch | Read [pptxgenjs.md](pptxgenjs.md) |
+| Create from scratch | Read [slide-forge-api.md](slide-forge-api.md) |
 | Full content & visual specs | Read [references/style-guide.md](references/style-guide.md) |
 
 ---
@@ -107,7 +107,7 @@ Proceed to Phase 2 after this check passes.
 
 ### Phase 2: Code Generation + Slide-by-Slide Review
 
-Only after Phase 1 is complete, write PptxGenJS code following [pptxgenjs.md](pptxgenjs.md).
+Only after Phase 1 is complete, write Python script following [slide-forge-api.md](slide-forge-api.md).
 
 **After writing all slide code**, run a quick mechanical scan. Semantic quality review is the critics' job — do not duplicate it here.
 
@@ -133,8 +133,8 @@ Follow the QA section below — render, inspect, fix, repeat.
 
 ```bash
 uv run python -m markitdown presentation.pptx
-uv run python scripts/thumbnail.py presentation.pptx
-uv run python scripts/office/unpack.py presentation.pptx unpacked/
+uv run slide-forge thumbnail presentation.pptx
+uv run slide-forge unpack presentation.pptx unpacked/
 ```
 
 ---
@@ -143,8 +143,8 @@ uv run python scripts/office/unpack.py presentation.pptx unpacked/
 
 **Read [editing.md](editing.md) for full details.**
 
-1. Analyze template with `thumbnail.py`
-2. Unpack → manipulate slides → edit content → clean → pack
+1. Analyze template with `uv run slide-forge thumbnail`
+2. Duplicate/add slides → unpack → edit content → clean → pack
 
 ---
 
@@ -152,7 +152,7 @@ uv run python scripts/office/unpack.py presentation.pptx unpacked/
 
 **Follow [Creation Workflow](#creation-workflow-required-phases) above** — Phase 1 (plan) → Phase 2 (code) → Phase 3 (QA).
 
-For PptxGenJS API reference, read [pptxgenjs.md](pptxgenjs.md). Use when no template or reference presentation is available.
+For slide-forge API reference, read [slide-forge-api.md](slide-forge-api.md). Use when no template or reference presentation is available.
 
 ---
 
@@ -178,7 +178,7 @@ Check:
 **You MUST render slides to images and read every image file.** Never skip this — code alone cannot tell you if the output looks correct.
 
 ```bash
-uv run python scripts/render_slides.py output.pptx output_slides/
+uv run slide-forge render output.pptx output_slides/
 ```
 
 Then **read each PNG file** (e.g., `output_slides/slide-01.png`) and inspect visually. Use subagents for fresh eyes — even for 2-3 slides.
@@ -220,8 +220,8 @@ Then **read each PNG file** (e.g., `output_slides/slide-01.png`) and inspect vis
 ## Converting to Images
 
 ```bash
-uv run python scripts/render_slides.py output.pptx
-uv run python scripts/render_slides.py output.pptx ./my_slides --dpi 200
+uv run slide-forge render output.pptx
+uv run slide-forge render output.pptx ./my_slides --dpi 200
 ```
 
 Creates `slide-01.png`, `slide-02.png`, etc.
@@ -233,28 +233,27 @@ Creates `slide-01.png`, `slide-02.png`, etc.
 ```bash
 uv add pywin32 pymupdf pillow python-pptx defusedxml
 uv run pip install "markitdown[pptx]"
-npm install pptxgenjs          # for creating from scratch
-npm install react react-dom react-icons sharp  # for icons (optional)
+# slide-forge library (PEP 723 scripts auto-install via uv run)
 ```
 
 ---
 
 ## Platform Compatibility
 
-Not all scripts work on all platforms. Choose the right tool for your environment:
+Not all commands work on all platforms. Choose the right tool for your environment:
 
-| Script | Platform | Requires | Purpose |
-|--------|----------|----------|---------|
-| `render_slides.py` | **Windows only** | MS PowerPoint + `pywin32`, `pymupdf` | Full-fidelity slide → PNG (via COM) |
-| `thumbnail.py` | **Linux / WSL** | LibreOffice (`soffice`), `poppler-utils` (`pdftoppm`), `pillow` | Quick thumbnail grid for template analysis |
-| `add_slide.py` | Any | `defusedxml` (indirect) | Duplicate/create slides in unpacked dir |
-| `clean.py` | Any | `defusedxml` | Remove orphaned files from unpacked dir |
-| `office/pack.py` | Any | `defusedxml` | Repack unpacked dir → .pptx |
-| `office/unpack.py` | Any | `defusedxml` | Unpack .pptx → editable XML |
-| `office/validate.py` | Any | `defusedxml` | XSD schema validation + auto-repair |
-| PptxGenJS (Node.js) | Any | `node`, `pptxgenjs` | Create .pptx from scratch via JS |
+| Command | Platform | Requires | Purpose |
+|---------|----------|----------|---------|
+| `uv run slide-forge render` | **Windows only** | MS PowerPoint + `pywin32`, `pymupdf` | Full-fidelity slide → PNG (via COM) |
+| `uv run slide-forge thumbnail` | **Linux / WSL** | LibreOffice (`soffice`), `poppler-utils` (`pdftoppm`), `pillow` | Quick thumbnail grid for template analysis |
+| `uv run slide-forge add-slide` | Any | `python-pptx` | Add a content or cover slide using slide-forge template |
+| `uv run slide-forge clean` | Any | `defusedxml` | Remove orphaned files from unpacked dir |
+| `uv run slide-forge pack` | Any | `defusedxml`, `lxml` | Repack unpacked dir → .pptx with validation |
+| `uv run slide-forge unpack` | Any | `defusedxml` | Unpack .pptx → editable XML |
+| `uv run slide-forge validate` | Any | `defusedxml`, `lxml` | XSD schema validation + auto-repair |
+| slide-forge (Python API) | Any | `python-pptx` | Create .pptx from scratch via Python |
 
 **Visual QA fallback when PowerPoint is unavailable:**
-- Use `thumbnail.py` (requires LibreOffice) for approximate rendering
+- Use `uv run slide-forge thumbnail` (requires LibreOffice) for approximate rendering
 - Or open the .pptx in LibreOffice Impress and manually export to PDF/images
 - Note: LibreOffice rendering may differ from PowerPoint (fonts, spacing, SmartArt)

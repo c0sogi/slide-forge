@@ -1,20 +1,8 @@
-"""Remove unreferenced files from an unpacked PPTX directory.
+"""Remove unreferenced files from an unpacked PPTX directory."""
 
-Usage: python clean.py <unpacked_dir>
+from __future__ import annotations
 
-Example:
-    python clean.py unpacked/
-
-This script removes:
-- Orphaned slides (not in sldIdLst) and their relationships
-- [trash] directory (unreferenced files)
-- Orphaned .rels files for deleted resources
-- Unreferenced media, embeddings, charts, diagrams, drawings, ink files
-- Unreferenced theme files
-- Unreferenced notes slides
-- Content-Type overrides for deleted files
-"""
-
+import argparse
 import re
 import sys
 from pathlib import Path
@@ -22,7 +10,56 @@ from pathlib import Path
 import defusedxml.minidom
 
 
-def get_slides_in_sldidlst(unpacked_dir: Path) -> set[str]:
+def configure_parser(subparsers: argparse._SubParsersAction) -> None:
+    parser = subparsers.add_parser("clean", help="Remove unreferenced files from unpacked PPTX")
+    parser.add_argument("unpacked_dir", help="Path to unpacked PPTX directory")
+    parser.set_defaults(func=_run)
+
+
+def _run(args: argparse.Namespace) -> None:
+    unpacked_dir = Path(args.unpacked_dir)
+
+    if not unpacked_dir.exists():
+        print(f"Error: {unpacked_dir} not found", file=sys.stderr)
+        sys.exit(1)
+
+    removed = clean_unused_files(unpacked_dir)
+
+    if removed:
+        print(f"Removed {len(removed)} unreferenced files:")
+        for f in removed:
+            print(f"  {f}")
+    else:
+        print("No unreferenced files found")
+
+
+def clean_unused_files(unpacked_dir: Path) -> list[str]:
+    all_removed: list[str] = []
+
+    slides_removed = _remove_orphaned_slides(unpacked_dir)
+    all_removed.extend(slides_removed)
+
+    trash_removed = _remove_trash_directory(unpacked_dir)
+    all_removed.extend(trash_removed)
+
+    while True:
+        removed_rels = _remove_orphaned_rels_files(unpacked_dir)
+        referenced = _get_referenced_files(unpacked_dir)
+        removed_files = _remove_orphaned_files(unpacked_dir, referenced)
+
+        total_removed = removed_rels + removed_files
+        if not total_removed:
+            break
+
+        all_removed.extend(total_removed)
+
+    if all_removed:
+        _update_content_types(unpacked_dir, all_removed)
+
+    return all_removed
+
+
+def _get_slides_in_sldidlst(unpacked_dir: Path) -> set[str]:
     pres_path = unpacked_dir / "ppt" / "presentation.xml"
     pres_rels_path = unpacked_dir / "ppt" / "_rels" / "presentation.xml.rels"
 
@@ -30,7 +67,7 @@ def get_slides_in_sldidlst(unpacked_dir: Path) -> set[str]:
         return set()
 
     rels_dom = defusedxml.minidom.parse(str(pres_rels_path))
-    rid_to_slide = {}
+    rid_to_slide: dict[str, str] = {}
     for rel in rels_dom.getElementsByTagName("Relationship"):
         rid = rel.getAttribute("Id")
         target = rel.getAttribute("Target")
@@ -44,7 +81,7 @@ def get_slides_in_sldidlst(unpacked_dir: Path) -> set[str]:
     return {rid_to_slide[rid] for rid in referenced_rids if rid in rid_to_slide}
 
 
-def remove_orphaned_slides(unpacked_dir: Path) -> list[str]:
+def _remove_orphaned_slides(unpacked_dir: Path) -> list[str]:
     slides_dir = unpacked_dir / "ppt" / "slides"
     slides_rels_dir = slides_dir / "_rels"
     pres_rels_path = unpacked_dir / "ppt" / "_rels" / "presentation.xml.rels"
@@ -52,7 +89,7 @@ def remove_orphaned_slides(unpacked_dir: Path) -> list[str]:
     if not slides_dir.exists():
         return []
 
-    referenced_slides = get_slides_in_sldidlst(unpacked_dir)
+    referenced_slides = _get_slides_in_sldidlst(unpacked_dir)
     removed = []
 
     for slide_file in slides_dir.glob("slide*.xml"):
@@ -86,7 +123,7 @@ def remove_orphaned_slides(unpacked_dir: Path) -> list[str]:
     return removed
 
 
-def remove_trash_directory(unpacked_dir: Path) -> list[str]:
+def _remove_trash_directory(unpacked_dir: Path) -> list[str]:
     trash_dir = unpacked_dir / "[trash]"
     removed = []
 
@@ -101,8 +138,8 @@ def remove_trash_directory(unpacked_dir: Path) -> list[str]:
     return removed
 
 
-def get_slide_referenced_files(unpacked_dir: Path) -> set:
-    referenced = set()
+def _get_slide_referenced_files(unpacked_dir: Path) -> set:
+    referenced: set = set()
     slides_rels_dir = unpacked_dir / "ppt" / "slides" / "_rels"
 
     if not slides_rels_dir.exists():
@@ -123,10 +160,10 @@ def get_slide_referenced_files(unpacked_dir: Path) -> set:
     return referenced
 
 
-def remove_orphaned_rels_files(unpacked_dir: Path) -> list[str]:
+def _remove_orphaned_rels_files(unpacked_dir: Path) -> list[str]:
     resource_dirs = ["charts", "diagrams", "drawings"]
     removed = []
-    slide_referenced = get_slide_referenced_files(unpacked_dir)
+    slide_referenced = _get_slide_referenced_files(unpacked_dir)
 
     for dir_name in resource_dirs:
         rels_dir = unpacked_dir / "ppt" / dir_name / "_rels"
@@ -148,8 +185,8 @@ def remove_orphaned_rels_files(unpacked_dir: Path) -> list[str]:
     return removed
 
 
-def get_referenced_files(unpacked_dir: Path) -> set:
-    referenced = set()
+def _get_referenced_files(unpacked_dir: Path) -> set:
+    referenced: set = set()
 
     for rels_file in unpacked_dir.rglob("*.rels"):
         dom = defusedxml.minidom.parse(str(rels_file))
@@ -166,7 +203,7 @@ def get_referenced_files(unpacked_dir: Path) -> set:
     return referenced
 
 
-def remove_orphaned_files(unpacked_dir: Path, referenced: set) -> list[str]:
+def _remove_orphaned_files(unpacked_dir: Path, referenced: set) -> list[str]:
     resource_dirs = ["media", "embeddings", "charts", "diagrams", "tags", "drawings", "ink"]
     removed = []
 
@@ -216,7 +253,7 @@ def remove_orphaned_files(unpacked_dir: Path, referenced: set) -> list[str]:
     return removed
 
 
-def update_content_types(unpacked_dir: Path, removed_files: list[str]) -> None:
+def _update_content_types(unpacked_dir: Path, removed_files: list[str]) -> None:
     ct_path = unpacked_dir / "[Content_Types].xml"
     if not ct_path.exists():
         return
@@ -234,51 +271,3 @@ def update_content_types(unpacked_dir: Path, removed_files: list[str]) -> None:
     if changed:
         with open(ct_path, "wb") as f:
             f.write(dom.toxml(encoding="utf-8"))
-
-
-def clean_unused_files(unpacked_dir: Path) -> list[str]:
-    all_removed = []
-
-    slides_removed = remove_orphaned_slides(unpacked_dir)
-    all_removed.extend(slides_removed)
-
-    trash_removed = remove_trash_directory(unpacked_dir)
-    all_removed.extend(trash_removed)
-
-    while True:
-        removed_rels = remove_orphaned_rels_files(unpacked_dir)
-        referenced = get_referenced_files(unpacked_dir)
-        removed_files = remove_orphaned_files(unpacked_dir, referenced)
-
-        total_removed = removed_rels + removed_files
-        if not total_removed:
-            break
-
-        all_removed.extend(total_removed)
-
-    if all_removed:
-        update_content_types(unpacked_dir, all_removed)
-
-    return all_removed
-
-
-if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python clean.py <unpacked_dir>", file=sys.stderr)
-        print("Example: python clean.py unpacked/", file=sys.stderr)
-        sys.exit(1)
-
-    unpacked_dir = Path(sys.argv[1])
-
-    if not unpacked_dir.exists():
-        print(f"Error: {unpacked_dir} not found", file=sys.stderr)
-        sys.exit(1)
-
-    removed = clean_unused_files(unpacked_dir)
-
-    if removed:
-        print(f"Removed {len(removed)} unreferenced files:")
-        for f in removed:
-            print(f"  {f}")
-    else:
-        print("No unreferenced files found")

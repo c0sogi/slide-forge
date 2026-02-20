@@ -1,14 +1,9 @@
 """Pack a directory into a PPTX file.
 
 Validates with auto-repair, condenses XML formatting, and creates the PPTX file.
-
-Usage:
-    python pack.py <input_directory> <output_file> [--original <file>] [--validate true|false]
-
-Examples:
-    python pack.py unpacked/ output.pptx --original input.pptx
-    python pack.py unpacked/ output.pptx --validate false
 """
+
+from __future__ import annotations
 
 import argparse
 import shutil
@@ -18,7 +13,36 @@ import zipfile
 from pathlib import Path
 
 import defusedxml.minidom
-from validators import PPTXSchemaValidator
+
+from slide_forge.cli.validators import PPTXSchemaValidator
+
+
+def configure_parser(subparsers: argparse._SubParsersAction) -> None:
+    parser = subparsers.add_parser("pack", help="Pack a directory into a PPTX file")
+    parser.add_argument("input_directory", help="Unpacked PPTX document directory")
+    parser.add_argument("output_file", help="Output .pptx file")
+    parser.add_argument("--original", help="Original .pptx file for validation comparison")
+    parser.add_argument(
+        "--validate",
+        type=lambda x: x.lower() == "true",
+        default=True,
+        metavar="true|false",
+        help="Run validation with auto-repair (default: true)",
+    )
+    parser.set_defaults(func=_run)
+
+
+def _run(args: argparse.Namespace) -> None:
+    _, message = pack(
+        args.input_directory,
+        args.output_file,
+        original_file=args.original,
+        validate=args.validate,
+    )
+    print(message)
+
+    if "Error" in message:
+        sys.exit(1)
 
 
 def pack(
@@ -100,32 +124,3 @@ def _condense_xml(xml_file: Path) -> None:
     except Exception as e:
         print(f"ERROR: Failed to parse {xml_file.name}: {e}", file=sys.stderr)
         raise
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Pack a directory into a PPTX file")
-    parser.add_argument("input_directory", help="Unpacked PPTX document directory")
-    parser.add_argument("output_file", help="Output .pptx file")
-    parser.add_argument(
-        "--original",
-        help="Original .pptx file for validation comparison",
-    )
-    parser.add_argument(
-        "--validate",
-        type=lambda x: x.lower() == "true",
-        default=True,
-        metavar="true|false",
-        help="Run validation with auto-repair (default: true)",
-    )
-    args = parser.parse_args()
-
-    _, message = pack(
-        args.input_directory,
-        args.output_file,
-        original_file=args.original,
-        validate=args.validate,
-    )
-    print(message)
-
-    if "Error" in message:
-        sys.exit(1)

@@ -17,7 +17,7 @@ Comprehensive content patterns for lab-style technical presentations. Originally
 7. [Color Palette](#color-palette)
 8. [Authenticity Markers](#authenticity-markers)
 9. [Anti-Patterns (What NOT to Do)](#anti-patterns)
-10. [PptxGenJS Quick Reference](#pptxgenjs-quick-reference)
+10. [slide-forge Quick Reference](#slide-forge-quick-reference)
 
 ---
 
@@ -961,31 +961,31 @@ What separates real Slide Forge presentations from AI-generated ones:
 
 ---
 
-## PptxGenJS Quick Reference
+## slide-forge Quick Reference
 
 Hex values (no `#` prefix):
 
-```javascript
-// Core
-const NAVY = "1B3765";
-const LIGHT_BLUE = "5B9BD5";
-const WHITE = "FFFFFF";
-const OFF_WHITE = "F5F5F5";
-const LIGHT_GRAY = "E7E6E6";
-const BLACK = "000000";
-const DARK_GRAY = "666666";
-const BODY_GRAY = "333333";
+```python
+# Core
+NAVY = "1B3765"
+LIGHT_BLUE = "5B9BD5"
+WHITE = "FFFFFF"
+OFF_WHITE = "F5F5F5"
+LIGHT_GRAY = "E7E6E6"
+BLACK = "000000"
+DARK_GRAY = "666666"
+BODY_GRAY = "333333"
 
-// Data visualization
-const PURPLE = "7030A0";
-const CORAL = "C84545";
-const GREEN = "00B050";
-const ORANGE = "FFA500";
-const YELLOW = "FFC000";
+# Data visualization
+PURPLE = "7030A0"
+CORAL = "C84545"
+GREEN = "00B050"
+ORANGE = "FFA500"
+YELLOW = "FFC000"
 
-// Pastel fills
-const PASTEL_BLUE = "B4C7E7";
-const PASTEL_PURPLE = "D5BDDB";
-const PASTEL_GREEN = "C5E0B4";
-const PASTEL_ORANGE = "FFD699";
+# Pastel fills
+PASTEL_BLUE = "B4C7E7"
+PASTEL_PURPLE = "D5BDDB"
+PASTEL_GREEN = "C5E0B4"
+PASTEL_ORANGE = "FFD699"
 ```

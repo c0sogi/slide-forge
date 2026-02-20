@@ -24,7 +24,7 @@ add_cover_title(
     cover,
     "Vision-Language-Action 모델의\n\nSim-to-Real 전이를 통한 공간 지능 구현",
 )
-add_cover_info(cover, date="2026년 02월 06일", presenter="최성빈")
+add_cover_info(cover, date="2026년 02월 06일", presenter="홍길동")
 
 # 표지 슬라이드에 내용 함수를 호출하면 오류 발생 확인
 try:

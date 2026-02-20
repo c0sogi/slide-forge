@@ -49,7 +49,7 @@ Phase 1: Plan.
 - Specify visuals per slide and why each visual adds information beyond text.
 
 Phase 2: Build.
-- Implement in PPTX (PptxGenJS or template editing workflow per slide-anvil skill).
+- Implement in PPTX (slide-forge Python library or template editing workflow per slide-anvil skill).
 - Encode hierarchy with true bullet levels; do not fake indentation with spaces.
 
 Phase 3: QA.
@@ -110,16 +110,16 @@ These are quick, countable checks. Do NOT self-iterate on semantic quality — t
 
 When tool or script failures occur during Phases 2-3:
 
-**PptxGenJS errors** (`node create_slides.js` fails):
-→ Read the error message. Common causes: `#` in hex color, string shape type instead of `pres.shapes.*`, missing `breakLine: true`, reused option objects.
-→ Fix the specific line in the JS file and re-run. Do not skip to QA with a broken file.
+**Python/slide-forge errors** (`uv run create_slides.py` fails):
+→ Read the error message. Common causes: missing import, wrong parameter name, invalid color string, EMU vs pt confusion.
+→ Fix the specific line in the Python file and re-run. Do not skip to QA with a broken file.
 
 **Rendering errors** (`render_slides.py` fails):
 → PowerPoint COM unavailable: fall back to `thumbnail.py` (LibreOffice) or inform the user that visual QA requires manual export.
-→ Corrupted PPTX: re-generate from code. If the same corruption recurs, check for known PptxGenJS pitfalls (8-char hex colors, string shape types).
+→ Corrupted PPTX: re-generate from code. If the same corruption recurs, check for known slide-forge pitfalls (invalid color format, wrong EMU values).
 
 **Text extraction errors** (`markitdown` fails on a slide):
-→ Fall back to `uv run python scripts/office/unpack.py` and read slide XML directly.
+→ Fall back to `uv run slide-forge unpack` and read slide XML directly.
 → If a specific slide fails, extract remaining slides and note the gap.
 
 **General rule**: diagnose → fix → retry (max 3 attempts per error). If stuck after 3 retries, report the error with the error message and what was attempted.

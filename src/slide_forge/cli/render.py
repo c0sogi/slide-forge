@@ -1,30 +1,29 @@
-#!/usr/bin/env python3
-"""
-Render PPTX slides to individual PNG images for visual QA.
+"""Render PPTX slides to individual PNG images for visual QA.
 
 Uses MS PowerPoint COM automation (PPTX -> PDF) + PyMuPDF (PDF -> PNG).
-Requires: uv add pywin32 pymupdf
-
-Usage:
-    uv run python scripts/render_slides.py <input.pptx> [output_dir] [--dpi N]
-
-Examples:
-    uv run python scripts/render_slides.py output.pptx
-    uv run python scripts/render_slides.py output.pptx ./slides --dpi 200
-
-Output:
-    slide-01.png, slide-02.png, ... in the output directory.
-    Also creates a temporary PDF in the output directory.
+Requires: pip install pywin32 pymupdf
 """
+
+from __future__ import annotations
 
 import argparse
 import os
 import sys
-import tempfile
 
 
-def check_dependencies():
-    """Verify required packages are available."""
+def configure_parser(subparsers: argparse._SubParsersAction) -> None:
+    parser = subparsers.add_parser("render", help="Render PPTX slides to PNG images (Windows only)")
+    parser.add_argument("pptx", help="Path to the .pptx file")
+    parser.add_argument("output_dir", nargs="?", help="Output directory (default: <name>_slides/)")
+    parser.add_argument("--dpi", type=int, default=150, help="Image resolution (default: 150)")
+    parser.set_defaults(func=_run)
+
+
+def _run(args: argparse.Namespace) -> None:
+    render(args.pptx, args.output_dir, args.dpi)
+
+
+def _check_dependencies() -> None:
     missing = []
     try:
         import win32com.client  # noqa: F401
@@ -36,12 +35,11 @@ def check_dependencies():
         missing.append("pymupdf")
     if missing:
         print(f"Missing dependencies: {', '.join(missing)}")
-        print(f"Install with: uv add {' '.join(missing)}")
+        print(f"Install with: pip install {' '.join(missing)}")
         sys.exit(1)
 
 
-def pptx_to_pdf(pptx_path: str, pdf_path: str) -> None:
-    """Convert PPTX to PDF using MS PowerPoint COM automation."""
+def _pptx_to_pdf(pptx_path: str, pdf_path: str) -> None:
     import pythoncom
     import win32com.client
 
@@ -58,8 +56,7 @@ def pptx_to_pdf(pptx_path: str, pdf_path: str) -> None:
         pythoncom.CoUninitialize()
 
 
-def pdf_to_images(pdf_path: str, output_dir: str, dpi: int = 150) -> list[str]:
-    """Convert PDF pages to PNG images using PyMuPDF."""
+def _pdf_to_images(pdf_path: str, output_dir: str, dpi: int = 150) -> list[str]:
     import fitz
 
     os.makedirs(output_dir, exist_ok=True)
@@ -85,7 +82,7 @@ def render(pptx_path: str, output_dir: str | None = None, dpi: int = 150) -> lis
     Returns:
         List of paths to generated PNG images
     """
-    check_dependencies()
+    _check_dependencies()
 
     if not os.path.exists(pptx_path):
         print(f"File not found: {pptx_path}")
@@ -101,12 +98,11 @@ def render(pptx_path: str, output_dir: str | None = None, dpi: int = 150) -> lis
     pdf_path = os.path.join(output_dir, "render.pdf")
 
     print(f"PPTX -> PDF: {pptx_path}")
-    pptx_to_pdf(pptx_path, pdf_path)
+    _pptx_to_pdf(pptx_path, pdf_path)
 
     print(f"PDF -> PNG ({dpi} DPI): {pdf_path}")
-    images = pdf_to_images(pdf_path, output_dir, dpi)
+    images = _pdf_to_images(pdf_path, output_dir, dpi)
 
-    # Clean up temporary PDF
     try:
         os.remove(pdf_path)
     except OSError:
@@ -116,16 +112,3 @@ def render(pptx_path: str, output_dir: str | None = None, dpi: int = 150) -> lis
     for img in images:
         print(f"  {os.path.basename(img)}")
     return images
-
-
-def main():
-    parser = argparse.ArgumentParser(description="Render PPTX slides to PNG images")
-    parser.add_argument("pptx", help="Path to the .pptx file")
-    parser.add_argument("output_dir", nargs="?", help="Output directory (default: <name>_slides/)")
-    parser.add_argument("--dpi", type=int, default=150, help="Image resolution (default: 150)")
-    args = parser.parse_args()
-    render(args.pptx, args.output_dir, args.dpi)
-
-
-if __name__ == "__main__":
-    main()

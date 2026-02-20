@@ -114,14 +114,14 @@ Only commit final output when both D and E are PASS, or cap reached.
 | Phase 3 (QA fix) | Updated extracted text + Updated rendered images | Both required |
 
 **Rules:**
-- Never send critics raw source code (PptxGenJS `.js` files). Always send extractable evidence.
+- Never send critics raw source code (`.py` script files). Always send extractable evidence.
 - If rendering is unavailable, send extracted text only and note that visual QA is deferred.
 - Always include the full slide plan alongside extracted text for context.
 
 **Input preparation checklist (supervisor responsibility):**
 - Phase 1: Extract the plan text. Send to both critics with a note: "Phase 1 -- plan text only, no images."
 - Phase 2+: Run `markitdown` AND `render_slides.py`. Send BOTH outputs to critics. If rendering is unavailable, send text only with a note that visual QA is deferred.
-- Never send raw PptxGenJS source code to critics.
+- Never send raw Python source code to critics.
 
 ## Feedback Delivery Format
 

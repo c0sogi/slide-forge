@@ -1,6 +1,6 @@
-"""
-Base validator with common validation logic for PPTX files.
-"""
+"""Base validator with common validation logic for PPTX files."""
+
+from __future__ import annotations
 
 import re
 from pathlib import Path
@@ -37,7 +37,7 @@ class BaseSchemaValidator:
         "sectionlst",
     }
 
-    ELEMENT_RELATIONSHIP_TYPES = {}
+    ELEMENT_RELATIONSHIP_TYPES: dict[str, str] = {}
 
     SCHEMA_MAPPINGS = {
         "ppt": "ISO-IEC29500-4_2016/pml.xsd",
@@ -78,7 +78,7 @@ class BaseSchemaValidator:
         "http://www.w3.org/XML/1998/namespace",
     }
 
-    def __init__(self, unpacked_dir, original_file=None, verbose=False):
+    def __init__(self, unpacked_dir: str | Path, original_file: str | Path | None = None, verbose: bool = False):
         self.unpacked_dir = Path(unpacked_dir).resolve()
         self.original_file = Path(original_file) if original_file else None
         self.verbose = verbose
@@ -91,7 +91,7 @@ class BaseSchemaValidator:
         if not self.xml_files:
             print(f"Warning: No XML files found in {self.unpacked_dir}")
 
-    def validate(self):
+    def validate(self) -> bool:
         raise NotImplementedError("Subclasses must implement the validate method")
 
     def repair(self) -> int:
@@ -127,7 +127,7 @@ class BaseSchemaValidator:
 
         return repairs
 
-    def validate_xml(self):
+    def validate_xml(self) -> bool:
         errors = []
 
         for xml_file in self.xml_files:
@@ -148,7 +148,7 @@ class BaseSchemaValidator:
                 print("PASSED - All XML files are well-formed")
             return True
 
-    def validate_namespaces(self):
+    def validate_namespaces(self) -> bool:
         errors = []
 
         for xml_file in self.xml_files:
@@ -174,14 +174,14 @@ class BaseSchemaValidator:
             print("PASSED - All namespace prefixes properly declared")
         return True
 
-    def validate_unique_ids(self):
+    def validate_unique_ids(self) -> bool:
         errors = []
-        global_ids = {}
+        global_ids: dict[str, tuple] = {}
 
         for xml_file in self.xml_files:
             try:
                 root = lxml.etree.parse(str(xml_file)).getroot()
-                file_ids = {}
+                file_ids: dict[tuple, dict] = {}
 
                 mc_elements = root.xpath(".//mc:AlternateContent", namespaces={"mc": self.MC_NAMESPACE})
                 for elem in mc_elements:
@@ -250,7 +250,7 @@ class BaseSchemaValidator:
                 print("PASSED - All required IDs are unique")
             return True
 
-    def validate_file_references(self):
+    def validate_file_references(self) -> bool:
         errors = []
 
         rels_files = list(self.unpacked_dir.rglob("*.rels"))
@@ -265,7 +265,7 @@ class BaseSchemaValidator:
             if file_path.is_file() and file_path.name != "[Content_Types].xml" and not file_path.name.endswith(".rels"):
                 all_files.append(file_path.resolve())
 
-        all_referenced_files = set()
+        all_referenced_files: set[Path] = set()
 
         if self.verbose:
             print(f"Found {len(rels_files)} .rels files and {len(all_files)} target files")
@@ -276,7 +276,7 @@ class BaseSchemaValidator:
 
                 rels_dir = rels_file.parent
 
-                referenced_files = set()
+                referenced_files: set[Path] = set()
                 broken_refs = []
 
                 for rel in rels_root.findall(
@@ -334,9 +334,7 @@ class BaseSchemaValidator:
                 print("PASSED - All references are valid and all files are properly referenced")
             return True
 
-    def validate_all_relationship_ids(self):
-        import lxml.etree
-
+    def validate_all_relationship_ids(self) -> bool:
         errors = []
 
         for xml_file in self.xml_files:
@@ -351,7 +349,7 @@ class BaseSchemaValidator:
 
             try:
                 rels_root = lxml.etree.parse(str(rels_file)).getroot()
-                rid_to_type = {}
+                rid_to_type: dict[str, str] = {}
 
                 for rel in rels_root.findall(f".//{{{self.PACKAGE_RELATIONSHIPS_NAMESPACE}}}Relationship"):
                     rid = rel.get("Id")
@@ -410,7 +408,7 @@ class BaseSchemaValidator:
                 print("PASSED - All relationship ID references are valid")
             return True
 
-    def _get_expected_relationship_type(self, element_name):
+    def _get_expected_relationship_type(self, element_name: str) -> str | None:
         elem_lower = element_name.lower()
 
         if elem_lower in self.ELEMENT_RELATIONSHIP_TYPES:
@@ -433,7 +431,7 @@ class BaseSchemaValidator:
 
         return None
 
-    def validate_content_types(self):
+    def validate_content_types(self) -> bool:
         errors = []
 
         content_types_file = self.unpacked_dir / "[Content_Types].xml"
@@ -443,8 +441,8 @@ class BaseSchemaValidator:
 
         try:
             root = lxml.etree.parse(str(content_types_file)).getroot()
-            declared_parts = set()
-            declared_extensions = set()
+            declared_parts: set[str] = set()
+            declared_extensions: set[str] = set()
 
             for override in root.findall(f".//{{{self.CONTENT_TYPES_NAMESPACE}}}Override"):
                 part_name = override.get("PartName")
@@ -478,8 +476,7 @@ class BaseSchemaValidator:
                 "emf": "image/x-emf",
             }
 
-            all_files = list(self.unpacked_dir.rglob("*"))
-            all_files = [f for f in all_files if f.is_file()]
+            all_files = [f for f in self.unpacked_dir.rglob("*") if f.is_file()]
 
             for xml_file in self.xml_files:
                 path_str = str(xml_file.relative_to(self.unpacked_dir)).replace("\\", "/")
@@ -526,7 +523,7 @@ class BaseSchemaValidator:
                 print("PASSED - All content files are properly declared in [Content_Types].xml")
             return True
 
-    def validate_file_against_xsd(self, xml_file, verbose=False):
+    def validate_file_against_xsd(self, xml_file: str | Path, verbose: bool = False) -> tuple[bool | None, set[str]]:
         xml_file = Path(xml_file).resolve()
         unpacked_dir = self.unpacked_dir.resolve()
 
@@ -557,7 +554,7 @@ class BaseSchemaValidator:
                 print(f"PASSED - No new errors (original had {len(current_errors)} errors)")
             return True, set()
 
-    def validate_against_xsd(self):
+    def validate_against_xsd(self) -> bool:
         new_errors = []
         original_error_count = 0
         valid_count = 0
@@ -602,7 +599,7 @@ class BaseSchemaValidator:
                 print("\nPASSED - No new XSD validation errors introduced")
             return True
 
-    def _get_schema_path(self, xml_file):
+    def _get_schema_path(self, xml_file: Path) -> Path | None:
         if xml_file.name in self.SCHEMA_MAPPINGS:
             return self.schemas_dir / self.SCHEMA_MAPPINGS[xml_file.name]
 
@@ -620,7 +617,7 @@ class BaseSchemaValidator:
 
         return None
 
-    def _clean_ignorable_namespaces(self, xml_doc):
+    def _clean_ignorable_namespaces(self, xml_doc: lxml.etree._ElementTree) -> lxml.etree._ElementTree:
         xml_string = lxml.etree.tostring(xml_doc, encoding="unicode")
         xml_copy = lxml.etree.fromstring(xml_string)
 
@@ -640,7 +637,7 @@ class BaseSchemaValidator:
 
         return lxml.etree.ElementTree(xml_copy)
 
-    def _remove_ignorable_elements(self, root):
+    def _remove_ignorable_elements(self, root: lxml.etree._Element) -> None:
         elements_to_remove = []
 
         for elem in list(root):
@@ -659,7 +656,7 @@ class BaseSchemaValidator:
         for elem in elements_to_remove:
             root.remove(elem)
 
-    def _preprocess_for_mc_ignorable(self, xml_doc):
+    def _preprocess_for_mc_ignorable(self, xml_doc: lxml.etree._ElementTree) -> lxml.etree._ElementTree:
         root = xml_doc.getroot()
 
         if f"{{{self.MC_NAMESPACE}}}Ignorable" in root.attrib:
@@ -667,7 +664,9 @@ class BaseSchemaValidator:
 
         return xml_doc
 
-    def _validate_single_file_xsd(self, xml_file, base_path):
+    def _validate_single_file_xsd(
+        self, xml_file: Path, base_path: Path
+    ) -> tuple[bool | None, set[str] | None]:
         schema_path = self._get_schema_path(xml_file)
         if not schema_path:
             return None, None
@@ -678,7 +677,7 @@ class BaseSchemaValidator:
                 xsd_doc = lxml.etree.parse(xsd_file, parser=parser, base_url=str(schema_path))
                 schema = lxml.etree.XMLSchema(xsd_doc)
 
-            with open(xml_file, "r") as f:
+            with open(xml_file) as f:
                 xml_doc = lxml.etree.parse(f)
 
             xml_doc, _ = self._remove_template_tags_from_text_nodes(xml_doc)
@@ -699,7 +698,7 @@ class BaseSchemaValidator:
         except Exception as e:
             return False, {str(e)}
 
-    def _get_original_file_errors(self, xml_file):
+    def _get_original_file_errors(self, xml_file: str | Path) -> set[str]:
         if self.original_file is None:
             return set()
 
@@ -724,14 +723,16 @@ class BaseSchemaValidator:
             is_valid, errors = self._validate_single_file_xsd(original_xml_file, temp_path)
             return errors if errors else set()
 
-    def _remove_template_tags_from_text_nodes(self, xml_doc):
-        warnings = []
+    def _remove_template_tags_from_text_nodes(
+        self, xml_doc: lxml.etree._ElementTree
+    ) -> tuple[lxml.etree._ElementTree, list[str]]:
+        warnings: list[str] = []
         template_pattern = re.compile(r"\{\{[^}]*\}\}")
 
         xml_string = lxml.etree.tostring(xml_doc, encoding="unicode")
         xml_copy = lxml.etree.fromstring(xml_string)
 
-        def process_text_content(text, content_type):
+        def process_text_content(text: str | None, content_type: str) -> str | None:
             if not text:
                 return text
             matches = list(template_pattern.finditer(text))
@@ -752,7 +753,3 @@ class BaseSchemaValidator:
             elem.tail = process_text_content(elem.tail, "tail content")
 
         return lxml.etree.ElementTree(xml_copy), warnings
-
-
-if __name__ == "__main__":
-    raise RuntimeError("This module should not be run directly.")

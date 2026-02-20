@@ -55,7 +55,7 @@ In planning text (Phase 1 plans), use ASCII hyphen-minus (`-`) for odd-level bul
 In rendered PPTX slides, the visual bullet marker may appear as en-dash (–) per
 style-guide.md's Level 2 description. This is a presentation-layer distinction:
 the planning syntax rule (`-` and `→` only) governs plan text; the rendered
-appearance is controlled by PptxGenJS bullet styling or template formatting.
+appearance is controlled by slide-forge bullet styling or template formatting.
 
 ### Planning-to-Render Mapping
 
@@ -72,7 +72,7 @@ The 6-level planning syntax maps to 3 visual tiers in rendered slides:
 ## PPTX Encoding Discipline
 
 - Do not implement indentation by inserting literal spaces into slide text.
-- Use real bullet levels/indentation (PptxGenJS bullet options or template placeholders).
+- Use real bullet levels/indentation (slide-forge bullet options or template placeholders).
 
 ## Writing Style
 

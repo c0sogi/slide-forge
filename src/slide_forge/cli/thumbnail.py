@@ -1,19 +1,11 @@
 """Create thumbnail grids from PowerPoint presentation slides.
 
 Creates a grid layout of slide thumbnails for quick visual analysis.
-Labels each thumbnail with its XML filename (e.g., slide1.xml).
-Hidden slides are shown with a placeholder pattern.
-
-Usage:
-    python thumbnail.py input.pptx [output_prefix] [--cols N]
-
-Examples:
-    python thumbnail.py presentation.pptx
-    # Creates: thumbnails.jpg
-
-    python thumbnail.py template.pptx grid --cols 4
-    # Creates: grid.jpg (or grid-1.jpg, grid-2.jpg for large decks)
+Requires: pip install Pillow defusedxml
+Platform: Linux/WSL (requires LibreOffice and pdftoppm)
 """
+
+from __future__ import annotations
 
 import argparse
 import subprocess
@@ -23,8 +15,9 @@ import zipfile
 from pathlib import Path
 
 import defusedxml.minidom
-from office.soffice import get_soffice_env
 from PIL import Image, ImageDraw, ImageFont
+
+from slide_forge.cli.soffice import get_soffice_env
 
 THUMBNAIL_WIDTH = 300
 CONVERSION_DPI = 100
@@ -37,8 +30,8 @@ FONT_SIZE_RATIO = 0.10
 LABEL_PADDING_RATIO = 0.4
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Create thumbnail grids from PowerPoint slides.")
+def configure_parser(subparsers: argparse._SubParsersAction) -> None:
+    parser = subparsers.add_parser("thumbnail", help="Create thumbnail grids from slides (Linux/WSL)")
     parser.add_argument("input", help="Input PowerPoint file (.pptx)")
     parser.add_argument(
         "output_prefix",
@@ -52,9 +45,10 @@ def main():
         default=DEFAULT_COLS,
         help=f"Number of columns (default: {DEFAULT_COLS}, max: {MAX_COLS})",
     )
+    parser.set_defaults(func=_run)
 
-    args = parser.parse_args()
 
+def _run(args: argparse.Namespace) -> None:
     cols = min(args.cols, MAX_COLS)
     if args.cols > MAX_COLS:
         print(f"Warning: Columns limited to {MAX_COLS}")
@@ -67,19 +61,19 @@ def main():
     output_path = Path(f"{args.output_prefix}.jpg")
 
     try:
-        slide_info = get_slide_info(input_path)
+        slide_info = _get_slide_info(input_path)
 
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
-            visible_images = convert_to_images(input_path, temp_path)
+            visible_images = _convert_to_images(input_path, temp_path)
 
             if not visible_images and not any(s["hidden"] for s in slide_info):
                 print("Error: No slides found", file=sys.stderr)
                 sys.exit(1)
 
-            slides = build_slide_list(slide_info, visible_images, temp_path)
+            slides = _build_slide_list(slide_info, visible_images, temp_path)
 
-            grid_files = create_grids(slides, cols, THUMBNAIL_WIDTH, output_path)
+            grid_files = _create_grids(slides, cols, THUMBNAIL_WIDTH, output_path)
 
             print(f"Created {len(grid_files)} grid(s):")
             for grid_file in grid_files:
@@ -90,12 +84,12 @@ def main():
         sys.exit(1)
 
 
-def get_slide_info(pptx_path: Path) -> list[dict]:
+def _get_slide_info(pptx_path: Path) -> list[dict]:
     with zipfile.ZipFile(pptx_path, "r") as zf:
         rels_content = zf.read("ppt/_rels/presentation.xml.rels").decode("utf-8")
         rels_dom = defusedxml.minidom.parseString(rels_content)
 
-        rid_to_slide = {}
+        rid_to_slide: dict[str, str] = {}
         for rel in rels_dom.getElementsByTagName("Relationship"):
             rid = rel.getAttribute("Id")
             target = rel.getAttribute("Target")
@@ -116,7 +110,7 @@ def get_slide_info(pptx_path: Path) -> list[dict]:
         return slides
 
 
-def build_slide_list(
+def _build_slide_list(
     slide_info: list[dict],
     visible_images: list[Path],
     temp_dir: Path,
@@ -133,7 +127,7 @@ def build_slide_list(
     for info in slide_info:
         if info["hidden"]:
             placeholder_path = temp_dir / f"hidden-{info['name']}.jpg"
-            placeholder_img = create_hidden_placeholder(placeholder_size)
+            placeholder_img = _create_hidden_placeholder(placeholder_size)
             placeholder_img.save(placeholder_path, "JPEG")
             slides.append((placeholder_path, f"{info['name']} (hidden)"))
         else:
@@ -144,7 +138,7 @@ def build_slide_list(
     return slides
 
 
-def create_hidden_placeholder(size: tuple[int, int]) -> Image.Image:
+def _create_hidden_placeholder(size: tuple[int, int]) -> Image.Image:
     img = Image.new("RGB", size, color="#F0F0F0")
     draw = ImageDraw.Draw(img)
     line_width = max(5, min(size) // 100)
@@ -153,7 +147,7 @@ def create_hidden_placeholder(size: tuple[int, int]) -> Image.Image:
     return img
 
 
-def convert_to_images(pptx_path: Path, temp_dir: Path) -> list[Path]:
+def _convert_to_images(pptx_path: Path, temp_dir: Path) -> list[Path]:
     pdf_path = temp_dir / f"{pptx_path.stem}.pdf"
 
     result = subprocess.run(
@@ -191,7 +185,7 @@ def convert_to_images(pptx_path: Path, temp_dir: Path) -> list[Path]:
     return sorted(temp_dir.glob("slide-*.jpg"))
 
 
-def create_grids(
+def _create_grids(
     slides: list[tuple[Path, str]],
     cols: int,
     width: int,
@@ -204,7 +198,7 @@ def create_grids(
         end_idx = min(start_idx + max_per_grid, len(slides))
         chunk_slides = slides[start_idx:end_idx]
 
-        grid = create_grid(chunk_slides, cols, width)
+        grid = _create_grid(chunk_slides, cols, width)
 
         if len(slides) <= max_per_grid:
             grid_filename = output_path
@@ -220,7 +214,7 @@ def create_grids(
     return grid_files
 
 
-def create_grid(
+def _create_grid(
     slides: list[tuple[Path, str]],
     cols: int,
     width: int,
@@ -279,7 +273,3 @@ def create_grid(
                 )
 
     return grid
-
-
-if __name__ == "__main__":
-    main()
