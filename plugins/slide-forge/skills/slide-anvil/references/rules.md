@@ -42,7 +42,7 @@ Subtitles (▌ lines) must be **concise noun phrases** (2-8 Korean words or equi
 ## Bullet Plan Syntax
 
 - Nested bullets use 4 leading spaces per level.
-- Level 1 (4 spaces): `-` only (new claim/takeaway).
+- Level 1 (4 spaces): `-` only (new claim/takeaway). **The first L1 bullet of each slide must be the slide's key message ("So What?").**
 - Level 2 (8 spaces): `-` (detail, example, specification) or `→` (conclusion/implication only).
 - Level 3 (12 spaces): `-` only (new sub-claim).
 - Level 4 (16 spaces): `-` (detail) or `→` (conclusion/implication only).
@@ -124,6 +124,12 @@ Every content slide must have a clear, identifiable key message:
 - Fact-listing without argument is insufficient — each slide must make a point, not just present information.
 - The slide should provoke discussion: "Is this the right approach?", "What does this imply for deployment?"
 - The presenter should NOT need to be present for the slide's message to be understood.
+
+**First L1 Bullet = Key Message (Hard Rule):**
+- The **first L1 bullet** of every content slide carries the slide's core claim, finding, or takeaway.
+- The subtitle names the topic; the first L1 bullet delivers the message. This role separation is mandatory.
+- Remaining L1 bullets provide supporting evidence, context, limitations, or implications that build on the first bullet's claim.
+- Self-check: cover the first L1 bullet. If the slide's point disappears, the structure is correct. If the point is still scattered across later bullets without a clear anchor, the first bullet is not doing its job.
 
 ### Intra-Slide Cohesion (L1 Bullet Connections)
 

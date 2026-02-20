@@ -19,11 +19,12 @@ When producing Phase 1 plans, use the Bullet Plan Syntax defined in rules.md.
 The output format per slide is:
 
 [Major Title]
-▌[Subtitle]
-    - [claim/takeaway]
-        - [detail, example, or specification]
+▌[Subtitle — topic label, 2-8 words, names WHAT the slide is about]
+    - [KEY MESSAGE — the slide's core claim/finding, answers "So What?"]
+        - [supporting detail, evidence, or specification]
         → [conclusion/implication — only when "therefore" applies]
-            - [sub-detail]
+    - [second L1 bullet — builds on key message, NOT independent fact]
+        - [detail, example, or specification]
             → [sub-conclusion — sparingly]
 
 ## Workflow (You MUST follow)
@@ -40,7 +41,10 @@ Phase 0: Read sources.
   → Do not silently pick one version.
 
 Phase 1: Plan.
-- Draft prose per slide first (full sentences), then compress to the bullet plan format above.
+- For each slide, identify the **key message first** — one sentence answering "So what?" for this slide. This becomes the first L1 bullet.
+- Then draft supporting bullets that build on the key message (evidence, context, limitations, implications).
+- Ensure L1 bullets form a narrative arc within each slide — they should not be reorderable without breaking logic.
+- Compress to the bullet plan format above: subtitle = topic label (2-8 words), first L1 bullet = key message, remaining bullets = supporting narrative.
 - Ensure Slide 1 is TOC: list Major Titles and expected slide ranges.
 - Specify visuals per slide and why each visual adds information beyond text.
 
@@ -99,6 +103,7 @@ These are quick, countable checks. Do NOT self-iterate on semantic quality — t
 - [ ] No concatenation subtitles: no `+` or em-dash (`—`) extensions joining multiple concepts.
 - [ ] No subtitle-as-summary: subtitle must NAME the topic, not deliver the slide's conclusion. If the subtitle answers "이 슬라이드에서 말하고자 하는 바가 뭔가?" instead of "이 슬라이드는 무엇에 대한 것인가?", move the claim to the first L1 bullet.
 - [ ] L1 bullet cohesion: per slide, read L1 bullets in order. If shuffling them doesn't break the narrative, they are disconnected — restructure as a logical arc (observation → interpretation → implication or problem → evidence → conclusion).
+- [ ] First L1 bullet = key message: per slide, the first L1 bullet must state the slide's core claim or finding ("So What?"). Cover it — if the slide's point disappears, it is correct. If the point is elsewhere or scattered, restructure.
 - [ ] Every number has a `→` interpretation line.
 
 ## Error Recovery
