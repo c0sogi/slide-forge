@@ -99,6 +99,21 @@ Concatenation title test:
 - Example of FAIL: "Soft Gating with Safety Retention + 복합 기하 스코어링", "5가지 DT 기준선 — 기하 신호별 기여 분리를 위한 가설 검정 프레임"
 - Fix: pick the dominant concept as the subtitle. If both matter equally, split into two slides.
 
+Subtitle-as-summary test:
+- The subtitle must NAME the topic, not DELIVER the slide's message or conclusion.
+- The subtitle answers "이 슬라이드는 무엇에 대한 것인가?" — NOT "이 슬라이드에서 말하고자 하는 바가 뭔가?"
+- If the subtitle contains the slide's claim, argument, or key finding, it is a summary, not a label.
+- Example of FAIL: "하위집단 분석: 다중 인스턴스에서 DT 효과 극대화" — the conclusion ("DT 효과 극대화") is crammed into the subtitle.
+- Example of FAIL: "주요 결과: DT 기반 전 방법이 Vision-only 대폭 상회" — the result IS the subtitle.
+- Fix: strip the claim out of the subtitle → `▌하위 집단 분석 결과`. Place the claim as the first L1 bullet.
+
+L1 bullet disconnection test (intra-slide cohesion):
+- L1 bullets within a single slide must form a narrative arc, not a list of independent facts.
+- Detection: mentally shuffle the L1 bullets. If the slide reads the same in any order, the bullets are disconnected.
+- Each L1 bullet (except the first) must relate to the previous one through cause→effect, observation→interpretation, problem→solution, or general→specific.
+- A slide where every L1 bullet introduces a completely new fact with no transitional logic is a fail.
+- Fix: restructure L1 bullets so each builds on the previous. Use connecting phrases ("그러나", "이를 해소하기 위해", "구체적으로", "이 결과가 시사하는 바").
+
 ## What You Review
 
 You may be given one or more of:

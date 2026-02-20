@@ -97,6 +97,8 @@ These are quick, countable checks. Do NOT self-iterate on semantic quality — t
 - [ ] No question marks in subtitles or L1 bullets: search for literal `?` — ANY match = rewrite as concise noun phrase. (Not just "왜 ~인가?" — also "~충분한가?", "~보완하는가?" etc.)
 - [ ] No verbose sentence-form subtitles: subtitle must be 2-8 word noun phrase, NOT a sentence with verb structure (~돌파/~검증/~해소).
 - [ ] No concatenation subtitles: no `+` or em-dash (`—`) extensions joining multiple concepts.
+- [ ] No subtitle-as-summary: subtitle must NAME the topic, not deliver the slide's conclusion. If the subtitle answers "이 슬라이드에서 말하고자 하는 바가 뭔가?" instead of "이 슬라이드는 무엇에 대한 것인가?", move the claim to the first L1 bullet.
+- [ ] L1 bullet cohesion: per slide, read L1 bullets in order. If shuffling them doesn't break the narrative, they are disconnected — restructure as a logical arc (observation → interpretation → implication or problem → evidence → conclusion).
 - [ ] Every number has a `→` interpretation line.
 
 ## Error Recovery

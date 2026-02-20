@@ -22,19 +22,22 @@ This is the **single source of truth** for all enforceable Slide Forge rules.
 
 Subtitles (▌ lines) must be **concise noun phrases** (2-8 Korean words or equivalent), NOT descriptive sentences or verbose clauses.
 
+**The subtitle names the TOPIC, not the MESSAGE.** The subtitle answers "이 슬라이드는 무엇에 대한 것인가?" — NOT "이 슬라이드에서 말하고자 하는 바가 뭔가?". The slide's claim or conclusion belongs in the first L1 bullet, not the subtitle.
+
 **Allowed subtitle forms:**
-- Topic label: `▌DT vs 비전 단독 성능 비교`
+- Topic label: `▌하위 집단 분석 결과`
 - Topic with focus marker: `▌검증 환경: T-LESS 벤치마크`
 - Concise scope: `▌파라미터 민감도 분석`
-- Short comparison: `▌Soft Gating 설계 및 복합 스코어링`
+- Short comparison: `▌DT vs 비전 단독 성능 비교`
 
 **Banned subtitle forms:**
+- Content summary crammed into subtitle: ~~`▌하위집단 분석: 다중 인스턴스에서 DT 효과 극대화`~~ → `▌하위 집단 분석 결과` (claim goes to first L1 bullet)
 - Sentence/clause with verb structure: ~~`▌비전 단독의 구조적 한계를 DT 기하 사전 정보로 돌파`~~
 - Long compound with em-dash extension: ~~`▌5가지 DT 기준선 — 기하 신호별 기여 분리를 위한 가설 검정 프레임`~~
 - Concatenation with `+`: ~~`▌Soft Gating with Safety Retention + 복합 기하 스코어링`~~
 - Sentence ending with ~검증/~돌파/~해소/~수행: ~~`▌외형 기반 인식의 한계가 가장 극명한 조건에서 검증`~~
 
-**Self-check:** Read the subtitle. If it has a subject-object-verb structure or reads like a full sentence, it is too long. Compress to a topic label.
+**Self-check:** Read the subtitle. (1) If it has a subject-object-verb structure, it is too long. (2) If it contains the slide's conclusion or claim, the message is misplaced — move it to the first L1 bullet. Compress to a topic label.
 
 ## Bullet Plan Syntax
 
@@ -122,6 +125,21 @@ Every content slide must have a clear, identifiable key message:
 - The slide should provoke discussion: "Is this the right approach?", "What does this imply for deployment?"
 - The presenter should NOT need to be present for the slide's message to be understood.
 
+### Intra-Slide Cohesion (L1 Bullet Connections)
+
+L1 bullets within a single slide must form a **narrative arc**, not a list of independent facts. The audience should feel a logical thread connecting each L1 bullet to the next.
+
+**Required:** Each L1 bullet (except the first) must relate to the previous one through at least one of:
+- **Cause → Effect**: "이런 원인이 있다" → "그 결과 이런 현상이 발생"
+- **Observation → Interpretation**: "데이터에서 이것이 관찰됨" → "이것이 의미하는 바는..."
+- **Premise → Consequence**: "이 조건을 가정하면" → "이런 결과가 도출"
+- **Problem → Solution → Limitation**: natural progression within a topic
+- **General → Specific**: broad claim followed by supporting detail
+
+**Banned:** L1 bullets that read like independent encyclopedia entries — each one could be on a separate slide with no loss of coherence. If removing any L1 bullet doesn't break the slide's narrative, the bullets are disconnected.
+
+**Self-check:** Read L1 bullets in sequence. If you can shuffle their order without the slide feeling different, they lack a connecting thread. Restructure so each bullet builds on or responds to the previous one.
+
 ### Inter-Slide Transitions
 
 Slides must not feel like independent articles. Each slide (except TOC) must connect to the previous one:
@@ -185,6 +203,8 @@ Slides must not feel like independent articles. Each slide (except TOC) must con
 7. **Question-Form Titles/Bullets**: ANY subtitle or Level-1 bullet containing a question mark (`?`) is a hard FAIL — no exceptions. This includes but is not limited to "왜 ~인가?", "~란 무엇인가?", "어떻게 ~할 것인가?", "~충분한가?", "~보완하는가?", "~필요한가?". The presenter's job is to deliver answers, not to pose questions. **Detection: search the entire plan for `?` in subtitles and L1 bullets.** Fix: rewrite as a **concise noun phrase** that names the topic. See [style-guide.md Anti-Pattern 7](style-guide.md#anti-patterns) for examples.
 8. **Verbose Descriptive Titles**: Subtitles written as full sentences or long clauses with verb structures -- e.g., "비전 단독의 구조적 한계를 DT 기하 사전 정보로 돌파". Subtitles must be **concise noun phrases (2-8 words)**, not miniature abstracts. Sentence-form titles make the deck unreadable at TOC level and compete with content for attention. Fix: compress to a topic label (e.g., "DT 기하 정보 기반 접근"). See Headers > Subtitle Form rule.
 9. **Concatenation Titles**: Using `+`, `및/과` chains, or em-dash (`—`) extensions to cram multiple concepts into one subtitle -- e.g., "Soft Gating with Safety Retention + 복합 기하 스코어링". A subtitle names ONE topic. If two concepts must appear, split into two slides or pick the dominant one. Fix: choose the primary topic as the subtitle.
+10. **Subtitle-as-Summary**: The subtitle tries to summarize the slide's content or cram the slide's conclusion into the title area -- e.g., "하위집단 분석: 다중 인스턴스에서 DT 효과 극대화". The subtitle should NAME the topic (`▌하위 집단 분석 결과`), not deliver the message. The slide's claim goes in the first L1 bullet. Detection: if the subtitle answers "이 슬라이드에서 말하고자 하는 바가 뭔가?" instead of "이 슬라이드는 무엇에 대한 것인가?", it is a summary, not a label. Fix: strip the conclusion out of the subtitle and place it as the first L1 bullet.
+11. **L1 Bullet Disconnection**: Top-level bullets within a single slide read like independent listings with no connecting thread -- each one could be moved to a separate slide without loss. The slide feels like a collection of loosely related facts, not a coherent argument. Detection: shuffle the L1 bullets; if the slide reads the same in any order, the bullets are disconnected. Fix: restructure L1 bullets as a narrative arc (observation → interpretation → implication, or problem → evidence → conclusion). Add transitional phrases or logical sequencing between bullets. See [style-guide.md Anti-Pattern 11](style-guide.md#anti-patterns) for examples.
 
 ## Authenticity Markers
 
