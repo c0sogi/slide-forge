@@ -11,15 +11,15 @@ Examples:
 """
 
 import argparse
-import sys
 import shutil
+import sys
 import tempfile
 import zipfile
 from pathlib import Path
 
 import defusedxml.minidom
-
 from validators import PPTXSchemaValidator
+
 
 def pack(
     input_directory: str,
@@ -92,9 +92,7 @@ def _condense_xml(xml_file: Path) -> None:
 
             for child in list(element.childNodes):
                 if (
-                    child.nodeType == child.TEXT_NODE
-                    and child.nodeValue
-                    and child.nodeValue.strip() == ""
+                    child.nodeType == child.TEXT_NODE and child.nodeValue and child.nodeValue.strip() == ""
                 ) or child.nodeType == child.COMMENT_NODE:
                     element.removeChild(child)
 
@@ -105,9 +103,7 @@ def _condense_xml(xml_file: Path) -> None:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Pack a directory into a PPTX file"
-    )
+    parser = argparse.ArgumentParser(description="Pack a directory into a PPTX file")
     parser.add_argument("input_directory", help="Unpacked PPTX document directory")
     parser.add_argument("output_file", help="Output .pptx file")
     parser.add_argument(

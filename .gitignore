@@ -15,3 +15,7 @@ Thumbs.db
 
 # OMC state (session-specific)
 .omc/
+
+# Temporary files
+.tmp-*
+~$*

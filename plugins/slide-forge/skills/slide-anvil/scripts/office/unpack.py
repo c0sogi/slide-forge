@@ -17,10 +17,10 @@ from pathlib import Path
 import defusedxml.minidom
 
 SMART_QUOTE_REPLACEMENTS = {
-    "\u201c": "&#x201C;",  
-    "\u201d": "&#x201D;",  
-    "\u2018": "&#x2018;",  
-    "\u2019": "&#x2019;",  
+    "\u201c": "&#x201C;",
+    "\u201d": "&#x201D;",
+    "\u2018": "&#x2018;",
+    "\u2019": "&#x2019;",
 }
 
 
@@ -64,7 +64,7 @@ def _pretty_print_xml(xml_file: Path) -> None:
         dom = defusedxml.minidom.parseString(content)
         xml_file.write_bytes(dom.toprettyxml(indent="  ", encoding="utf-8"))
     except Exception:
-        pass  
+        pass
 
 
 def _escape_smart_quotes(xml_file: Path) -> None:
@@ -78,9 +78,7 @@ def _escape_smart_quotes(xml_file: Path) -> None:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Unpack a PPTX file for editing"
-    )
+    parser = argparse.ArgumentParser(description="Unpack a PPTX file for editing")
     parser.add_argument("input_file", help="PPTX file to unpack")
     parser.add_argument("output_directory", help="Output directory")
     args = parser.parse_args()

@@ -53,9 +53,7 @@ def main():
     if args.original:
         original_file = Path(args.original)
         assert original_file.is_file(), f"Error: {original_file} is not a file"
-        assert original_file.suffix.lower() == ".pptx", (
-            f"Error: {original_file} must be a .pptx file"
-        )
+        assert original_file.suffix.lower() == ".pptx", f"Error: {original_file} must be a .pptx file"
 
     if path.is_file() and path.suffix.lower() == ".pptx":
         temp_dir = tempfile.mkdtemp()
