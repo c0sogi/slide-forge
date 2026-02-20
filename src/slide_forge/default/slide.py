@@ -31,6 +31,9 @@ _SLIDE_TYPE_ATTR = "_slide_forge_type"
 _COVER = "cover"
 _CONTENT = "content"
 
+# ── Section state tracking ───────────────────────────────────
+_SECTION_ADDED_ATTR = "_slide_forge_section_added"
+
 # ── Cover slide ──────────────────────────────────────────────
 _COVER_TITLE_LEFT = Emu(561257)
 _COVER_TITLE_TOP = Emu(2636912)
@@ -432,6 +435,15 @@ def add_content_box(
     return tf
 
 
+def _require_section(tf: TextFrame) -> None:
+    """Raise :class:`RuntimeError` if ``add_section()`` has not been called on *tf* yet."""
+    if not getattr(tf, _SECTION_ADDED_ATTR, False):
+        raise RuntimeError(
+            "add_section()을 먼저 호출해야 합니다.\n"
+            "  올바른 순서: add_content_box() → add_section() → add_bullet() / add_spacer()"
+        )
+
+
 def add_section(
     tf: TextFrame,
     title: str,
@@ -439,7 +451,18 @@ def add_section(
     font_size: int = _SECTION_SIZE,
     color: "Color" = _SECTION_COLOR,
 ) -> _Paragraph:
-    """Add a **▌Section Header** paragraph."""
+    """Add a **▌Section Header** paragraph.
+
+    Must be called exactly once per :class:`TextFrame` returned by
+    :func:`add_content_box`, and before any :func:`add_bullet` or
+    :func:`add_spacer` calls.
+    """
+    if getattr(tf, _SECTION_ADDED_ATTR, False):
+        raise RuntimeError(
+            "add_section()은 TextFrame당 한 번만 호출할 수 있습니다.\n"
+            "  새 섹션이 필요하면 새 슬라이드를 만드세요: create_slide() → add_content_box() → add_section()"
+        )
+    setattr(tf, _SECTION_ADDED_ATTR, True)
     p = _next_para(tf)
     pPr = p._element.get_or_add_pPr()
     pPr.set("eaLnBrk", "1")
@@ -481,6 +504,8 @@ def add_bullet(
     color : RGBColor, optional
         Override the default ``#404040``.
     """
+    _require_section(tf)
+
     if bullet is None:
         bullet = _DEFAULT_BULLET.get(level, "check")
 
@@ -509,6 +534,7 @@ def add_bullet(
 
 def add_spacer(tf: TextFrame) -> _Paragraph:
     """Add an empty separator line."""
+    _require_section(tf)
     p = _next_para(tf)
     pPr = p._element.get_or_add_pPr()
     pPr.set("marL", str(_MARGIN_BASE))

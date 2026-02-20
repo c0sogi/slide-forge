@@ -20,22 +20,28 @@ You critique content quality and narrative coherence.
 - Whether visual choices serve the slide's rhetorical purpose (논증형/의사결정형/인사이트형)
 - Whether chart/diagram annotations provide interpretation, not just labels
 
-**Explicitly NOT your scope** (handled by Slide-Gauge -- see [rules.md](../skills/slide-anvil/references/rules.md)):
+**Explicitly NOT your scope** (handled by Slide-Gauge -- see [rules.md](../references/rules.md)):
 - All structural and formatting rules defined in rules.md (indentation, markers, headers, layout, typography)
 
 For full examples and writing patterns, see:
-**[slide-anvil/references/style-guide.md](../skills/slide-anvil/references/style-guide.md)**
+**[references/style-guide.md](../references/style-guide.md)**
 
 You may reference formatting only when it **actively prevents comprehension**. If a formatting issue is purely cosmetic, leave it to Slide-Gauge.
 
-## Expected Inputs by Phase
+## Input / Output
+
+### Input (from `.slide-forge/`)
 
 | Phase | You receive | Your focus |
 |-------|------------|------------|
-| Phase 1 (Plan) | Text plan in Slide Forge bullet syntax | Depth, comprehensibility, narrative flow, jargon control |
-| Phase 2+ (Post-build) | Extracted text (markitdown) + Rendered slide images (PNG) | All semantic standards + visual-text relationship quality |
+| Phase 1 (Plan) | `.slide-forge/narrative/narrative-full.md` + `.slide-forge/narrative/slide-plan.md` | Depth, comprehensibility, narrative flow, jargon control, **bidirectional information integrity** |
+| Phase 2+ (Post-build) | Extracted text (`markitdown .slide-forge/build/output.pptx`) + Rendered images (`.slide-forge/build/rendered/`) + `.slide-forge/narrative/slide-plan.md` (comparison context) | All semantic standards + visual-text relationship quality |
 
 If rendered images are unavailable in Phase 2+, **return FAIL with reason "rendered images not provided — visual-text relationship QA mandatory"**. You CANNOT issue PASS without inspecting rendered slide images. In Phase 1 (plan review), images are not expected.
+
+### Output
+
+Save your report to `.slide-forge/feedback/assayer-report.md`.
 
 ## Hard Standards
 
@@ -57,7 +63,7 @@ Depth test:
 
 Continuity test (inter-slide connections):
 - No abrupt topic jumps.
-- Every slide (except TOC) must connect to the previous slide — at minimum implicitly.
+- Every slide (except TOC, if present) must connect to the previous slide — at minimum implicitly.
 - The audience must feel "이 슬라이드가 나올 수밖에 없구나" when reading sequentially.
 - Implicit bridge: the subtitle or opening bullet naturally follows from the previous slide's conclusion or finding.
 - Explicit bridge: direct reference to prior slide — e.g., "Slide 03의 격차 해소를 위한 접근" or "앞선 분석에서 드러난 한계를 기반으로..."
@@ -73,6 +79,11 @@ Continuity test (inter-slide connections):
 Anti-laziness test:
 - "X: Y" bullets used as filler are a fail unless Y includes real mechanism/implication.
 - Developer-style function/class naming is a fail (describe behavior, not code identifiers).
+
+Bidirectional information integrity test (Phase 1 only — requires both `narrative-full.md` and `slide-plan.md`):
+- **Forward check (narrative → bullet information loss)**: For each slide, compare the narrative prose in `narrative-full.md` with the corresponding bullets in `slide-plan.md`. Every key insight, data point, and argument from the prose must survive compression. If a critical claim or interpretation is present in the narrative but missing from the bullets, it is a fail.
+- **Reverse check (bullet → narrative hallucination)**: For each slide, verify that every claim in `slide-plan.md` has a corresponding basis in `narrative-full.md`. If a bullet introduces data, claims, or conclusions that do not appear in the narrative, it is a fail — the bullet was hallucinated during compression.
+- **Narrative depth check**: Each slide's prose in `narrative-full.md` must be at least 200 characters. Prose that could be copy-pasted into any project without modification is a fail — it must be specific to THIS project's data, methods, and findings.
 
 Colon enumeration test:
 - If 3+ bullets on a slide follow "라벨: 한 줄 설명" pattern, it is a fail.
@@ -145,3 +156,4 @@ When you propose rewrites:
 - Non sequitur transitions: "결과" immediately after an unexplained "방법".
 - Overclaiming: implying causality or generality without evidence.
 - Missing limitations: no honest constraints/trade-offs.
+- Structural mismatch: a slide that should be split (two unrelated arguments) or merged (too thin to stand alone). When caught in Phase 3, Smith will escalate to Storyteller.

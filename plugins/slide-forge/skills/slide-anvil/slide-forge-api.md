@@ -69,6 +69,8 @@ slide = create_cover_slide(prs)
 
 ## Cover Slide
 
+> **Note:** Slide Forge standard style does not use cover slides (see [rules.md](../../references/rules.md)). These functions are available for custom use cases outside the standard workflow.
+
 Cover slides use dedicated functions. Do **not** mix cover and content functions on the same slide.
 
 ### add_cover_title(slide, text)
@@ -592,45 +594,43 @@ Emu(914400) # direct EMU value
 
 from pptx.util import Inches, Emu
 from slide_forge import (
-    get_presentation, create_slide, create_cover_slide,
+    get_presentation, create_slide,
     add_slide_title, add_content_box,
     add_section, add_bullet, add_spacer,
     add_shape, add_line,
 )
-from slide_forge.default.slide import (
-    add_cover_title, add_cover_info, add_table, add_chart, add_figure,
-)
+from slide_forge.default.slide import add_table, add_chart, add_figure
 
 prs = get_presentation()
 
-# ── Cover slide ──────────────────────────────────────────
-cover = create_cover_slide(prs)
-add_cover_title(cover, "MCD 기반 이상 탐지\n성능 평가 보고")
-add_cover_info(cover, "2025.06.20", "홍길동")
+# ── Slide 1: 주요 결과 ───────────────────────────────────
+slide1 = create_slide(prs)
+add_slide_title(slide1, "MCD 기반 이상 탐지 성능 평가")
 
-# ── Content slide ────────────────────────────────────────
-slide = create_slide(prs)
-add_slide_title(slide, "MCD 기반 이상 탐지 성능 평가")
-
-tf = add_content_box(slide)
+tf = add_content_box(slide1)
 add_section(tf, "주요 결과")
 add_bullet(tf, "정상 데이터 1,198,500건(96.3%), 이상 데이터 46,500건(3.7%)")
 add_bullet(tf, "Precision: [green]92.3%[/green], Recall: 88.0%, F1-Score: 90.1%", level=1)
 add_bullet(tf, "Joint 1/3/6에 대해 높은 정확도 (R² > 93%)", level=1)
 add_bullet(tf, "Joint 2/4 정확도 상대적 저조 -> 개선 필요", level=1)
 
-add_spacer(tf)
-add_section(tf, "한계점")
-add_bullet(tf, "하중 효과를 반영하지 못한 한계점 존재")
-
 # Chart in lower area
-add_chart(slide, "column",
+add_chart(slide1, "column",
     categories=["J1", "J2", "J3", "J4", "J5", "J6"],
     series={"R²": [93.5, 23.2, 91.8, 45.6, 78.9, 95.1]},
     left=Inches(0.5), top=Inches(3.5),
     width=Inches(4.5), height=Inches(2.5),
     title="Per-Joint R² Score",
     legend=False)
+
+# ── Slide 2: 한계점 ─────────────────────────────────────
+slide2 = create_slide(prs)
+add_slide_title(slide2, "한계점 및 향후 과제")
+
+tf2 = add_content_box(slide2)
+add_section(tf2, "한계점")
+add_bullet(tf2, "하중 효과를 반영하지 못한 한계점 존재")
+add_bullet(tf2, "실제 하중 조건에서의 검증 실험 필요", level=1)
 
 prs.save("output.pptx")
 ```

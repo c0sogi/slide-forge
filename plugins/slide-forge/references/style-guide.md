@@ -417,7 +417,7 @@ Each content slide must make a **point**, not just present information. If the a
 
 ### Inter-Slide Connections
 
-Slides must not feel like independent Wikipedia articles. Each slide (except TOC) must connect to its predecessor.
+Slides must not feel like independent Wikipedia articles. Each slide (except TOC, if present) must connect to its predecessor.
 
 **Connection types (at least one per slide):**
 - **Implicit bridge**: subtitle or first bullet naturally continues the previous slide's thread.

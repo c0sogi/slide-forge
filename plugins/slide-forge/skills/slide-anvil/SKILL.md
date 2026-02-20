@@ -10,9 +10,8 @@ description: "Create or edit PowerPoint (.pptx) presentations in Slide Forge lab
 | Task | Guide |
 |------|-------|
 | Read/analyze content | `uv run python -m markitdown presentation.pptx` |
-| Edit or create from template | Read [editing.md](editing.md) |
-| Create from scratch | Read [slide-forge-api.md](slide-forge-api.md) |
-| Full content & visual specs | Read [references/style-guide.md](references/style-guide.md) |
+| Create or rebuild PPTX | Read [slide-forge-api.md](slide-forge-api.md) |
+| Full content & visual specs | Read [references/style-guide.md](../../references/style-guide.md) |
 
 ---
 
@@ -22,10 +21,28 @@ description: "Create or edit PowerPoint (.pptx) presentations in Slide Forge lab
 
 ---
 
+## Usage Modes
+
+This skill operates in two modes depending on whether agents can be spawned:
+
+| Mode | When | What You Do |
+|------|------|-------------|
+| **Normal (Agent Mode)** | Storyteller + Critics are available | Smith uses only **Phase 2 (Build) + Phase 3 (QA)** from this skill. Content comes from `.slide-forge/narrative/slide-plan.md` and `visual-spec.md`. |
+| **Fallback (Enhanced Smith)** | Agents cannot be spawned | You self-execute the full pipeline: content planning → self-critique → build → QA. See [Enhanced Smith Fallback](#enhanced-smith-fallback-workflow) below. |
+
+In **Normal mode**, skip directly to [Phase 2: Code Generation](#phase-2-code-generation--slide-by-slide-review). Your inputs are:
+- `.slide-forge/narrative/slide-plan.md` — bullet plan
+- `.slide-forge/narrative/visual-spec.md` — visual specifications
+- `.slide-forge/sources/images/` — image files
+
+Your outputs go to `.slide-forge/build/`.
+
+---
+
 ## Rules Reference
 
-All writing, structural, and layout rules: [references/rules.md](references/rules.md)
-Full examples and pattern catalog: [references/style-guide.md](references/style-guide.md)
+All writing, structural, and layout rules: [references/rules.md](../../references/rules.md)
+Full examples and pattern catalog: [references/style-guide.md](../../references/style-guide.md)
 
 ---
 
@@ -33,9 +50,18 @@ Full examples and pattern catalog: [references/style-guide.md](references/style-
 
 **Never jump straight into code.** Plan content first, then generate slides, then QA.
 
-### Phase 1: Content Planning (Before Any Code)
+> **Normal (Agent) Mode:** Skip Phase 1 entirely — the Storyteller handles content planning. Start from [Phase 2](#phase-2-code-generation--slide-by-slide-review), reading from `.slide-forge/narrative/`.
 
-**One pass, then hand off to critics.** Draft the content carefully in a single pass (Steps 1A→1B→1C→1D), run the mechanical self-check, then submit to critics. Do NOT self-iterate 2-3 times — the external critic loop (Crucible → Gauge → Assayer) handles iterative refinement. Your job is to produce a solid first draft, not a polished final version.
+### Phase 1: Content Planning (Fallback Mode Only)
+
+**This phase applies only in Enhanced Smith fallback mode** (when Storyteller is unavailable). In normal agent mode, the Storyteller produces `slide-plan.md` and `visual-spec.md` — skip directly to Phase 2.
+
+Save all Phase 1 outputs to `.slide-forge/narrative/`:
+- `narrative-full.md` — prose draft (narrative format: see [references/narrative-format.md](../../references/narrative-format.md))
+- `slide-plan.md` — compressed bullet plan
+- `visual-spec.md` — visual specifications
+
+**One pass, then hand off to critics.** Draft the content carefully in a single pass (Steps 1A→1B→1C→1D), run the mechanical self-check, then submit to critics. Do NOT self-iterate 2-3 times — the external critic loop (Crucible → Gauge → Assayer → Wanderer) handles iterative refinement. Your job is to produce a solid first draft, not a polished final version.
 
 #### Step 1A: Narrative Draft (서술식 초안)
 
@@ -43,11 +69,11 @@ For each slide, **write the content as flowing prose first** — full sentences,
 
 **Why prose first?** Bullet points written directly tend to be shallow and generic. Writing prose forces you to actually understand and reason through the content, producing specific details and logical connections that survive the compression into bullets.
 
-For rhetorical strategy examples (prose BAD/GOOD comparisons and compressed bullet versions), see [references/phase1-examples.md](references/phase1-examples.md).
+For rhetorical strategy examples (prose BAD/GOOD comparisons and compressed bullet versions), see [references/phase1-examples.md](../../references/phase1-examples.md).
 
 #### Step 1B: Bullet Compression (불릿 압축)
 
-Compress the narrative draft from Step 1A into the Bullet Plan Syntax defined in [references/rules.md](references/rules.md).
+Compress the narrative draft from Step 1A into the Bullet Plan Syntax defined in [references/rules.md](../../references/rules.md).
 
 **Process:**
 1. Extract core claims and supporting evidence from the prose
@@ -64,7 +90,7 @@ Compress the narrative draft from Step 1A into the Bullet Plan Syntax defined in
 - No information loss: every key insight from the prose must survive compression
 - No polite endings (습니다/합니다) — use noun endings (~수행, ~구축, ~확인, etc.)
 
-For detailed BAD/GOOD compression examples by rhetorical strategy, see [references/phase1-examples.md](references/phase1-examples.md).
+For detailed BAD/GOOD compression examples by rhetorical strategy, see [references/phase1-examples.md](../../references/phase1-examples.md).
 
 #### Step 1C: Visual Specification + Critical Evaluation
 
@@ -79,7 +105,7 @@ For each slide, specify the visual element, then **challenge it**:
    - **"박스 안의 텍스트를 불릿으로 옮기면 정보가 줄어드는가?"** → No면 그것은 다이어그램이 아니라 장식된 텍스트. 실제 데이터 차트, 프로세스 플로우, 아키텍처 구조도 등으로 교체.
 3. **Revise or replace** if the visual fails any challenge
 
-For visual specification examples with self-checks, see [references/phase1-examples.md](references/phase1-examples.md).
+For visual specification examples with self-checks, see [references/phase1-examples.md](../../references/phase1-examples.md).
 
 #### Step 1D: Story Check (전체 흐름 검증)
 
@@ -107,7 +133,15 @@ Proceed to Phase 2 after this check passes.
 
 ### Phase 2: Code Generation + Slide-by-Slide Review
 
-Only after Phase 1 is complete, write Python script following [slide-forge-api.md](slide-forge-api.md).
+Only after content planning is complete (Phase 1 in fallback, or Storyteller artifacts in normal mode), write Python script following [slide-forge-api.md](slide-forge-api.md).
+
+**Inputs:** Read `slide-plan.md` and `visual-spec.md` from `.slide-forge/narrative/`.
+**Outputs:** Save script and PPTX to `.slide-forge/build/`.
+
+```bash
+# Save script to .slide-forge/build/create_slides.py, then run:
+uv run .slide-forge/build/create_slides.py
+```
 
 **After writing all slide code**, run a quick mechanical scan. Semantic quality review is the critics' job — do not duplicate it here.
 
@@ -115,17 +149,57 @@ Only after Phase 1 is complete, write Python script following [slide-forge-api.m
 
 Scan the generated code/text for these **mechanically verifiable** issues only:
 
-- [ ] Bullet text matches the Phase 1 plan — no content was lost or invented during code translation
+- [ ] Bullet text matches slide-plan.md — no content was lost or invented during code translation
 - [ ] Bullet levels are encoded as real indentation levels (not literal leading spaces)
 - [ ] No polite verb endings slipped in (습니다/합니다/됩니다)
-- [ ] Visual elements have correct data (labels, values match the plan)
+- [ ] Visual elements have correct data (labels, values match visual-spec.md)
 - [ ] No placeholder text remains (XXXX, lorem, TBD without gray dashed border)
 
 Fix any failures, then proceed to Phase 3. Do NOT review for depth, narrative, or persuasiveness — that is Slide-Assayer's responsibility.
 
 ### Phase 3: QA
 
-Follow the QA section below — render, inspect, fix, repeat.
+Follow the QA section below — render to `.slide-forge/build/rendered/`, inspect, fix, repeat.
+
+---
+
+## Enhanced Smith Fallback Workflow (에이전트 스폰 불가 시)
+
+When agents cannot be spawned (no Storyteller, Crucible, Gauge, Assayer, Wanderer available), this skill runs the full pipeline in self-execution mode with role switching.
+
+**Prerequisites:**
+- Create `.slide-forge/` directory structure before starting
+- Write `config.json` with topic, audience, purpose
+
+**Role Switching (6 steps):**
+
+1. **Storyteller Mode**: Execute Phase 0 (source collection + analysis) + Phase 1 (prose draft → bullet compression → visual spec → flow check). Save all outputs to `.slide-forge/narrative/`.
+
+2. **Crucible Role**: Challenge your own strategic choices as if reviewing a stranger's plan. Ask "why this and not something else?" for each major decision (slide ordering, rhetorical strategy, visual choices). Output DEEPEN or PROCEED.
+
+3. **Enhanced Smith Response**: Respond to every reflection prompt with one of:
+   - **Maintain**: defend current choice with concrete reasoning
+   - **Adopt**: accept alternative and revise
+   - **Synthesize**: combine elements of both
+   Revise `.slide-forge/narrative/` files if any changes were adopted.
+
+4. **Gauge Role**: Validate `slide-plan.md` against all structural rules in [rules.md](../../references/rules.md). Output PASS or FAIL with concrete fix instructions.
+
+5. **Assayer Role**: Validate narrative depth, comprehensibility, information loss (narrative-full.md vs slide-plan.md). Output PASS or FAIL with rewrite directives.
+
+6. **Smith Mode**: Execute Phase 2 (Build PPTX) + Phase 3 (QA). Save to `.slide-forge/build/`.
+
+7. **Gauge + Assayer + Wanderer Role**: Validate build output (extracted text via `markitdown` + rendered slide images). For Wanderer role: evaluate comprehension as a naive reader — do NOT re-read your own plan, narrative, or source materials.
+
+8. **(FAIL)** Smith Mode: Fix issues, rebuild. Max 3 iterations per phase.
+
+**Bias mitigation for self-execution:**
+- When switching to Crucible role, forget your authorial intent. Ask "why this and not something else?" as if reviewing a stranger's plan.
+- When switching to Gauge, Assayer, or Wanderer role, do NOT re-read your own plan or code.
+- When switching to Wanderer role, actively forget your narrative intent. Ask "Can I understand this slide having never seen the source material?" If you think "I know what I meant here," that is the Wanderer finding a comprehension gap.
+- Work ONLY from extracted evidence: `markitdown` output and rendered slide images.
+- Pretend you see these slides for the first time. If you think "I know what I meant here," the slide is unclear — flag it.
+- Apply the same PASS/FAIL threshold as if reviewing someone else's work.
 
 ---
 
@@ -134,25 +208,17 @@ Follow the QA section below — render, inspect, fix, repeat.
 ```bash
 uv run python -m markitdown presentation.pptx
 uv run slide-forge thumbnail presentation.pptx
-uv run slide-forge unpack presentation.pptx unpacked/
 ```
 
 ---
 
-## Editing Workflow
+## Creating / Rebuilding
 
-**Read [editing.md](editing.md) for full details.**
-
-1. Analyze template with `uv run slide-forge thumbnail`
-2. Duplicate/add slides → unpack → edit content → clean → pack
-
----
-
-## Creating from Scratch
+All PPTX creation and editing uses the declarative Python API. Modify the `create_slides.py` script and re-run — no XML unpacking needed.
 
 **Follow [Creation Workflow](#creation-workflow-required-phases) above** — Phase 1 (plan) → Phase 2 (code) → Phase 3 (QA).
 
-For slide-forge API reference, read [slide-forge-api.md](slide-forge-api.md). Use when no template or reference presentation is available.
+For slide-forge API reference, read [slide-forge-api.md](slide-forge-api.md).
 
 ---
 
@@ -163,25 +229,25 @@ For slide-forge API reference, read [slide-forge-api.md](slide-forge-api.md). Us
 ### Content QA
 
 ```bash
-uv run python -m markitdown output.pptx
+uv run python -m markitdown .slide-forge/build/output.pptx
 ```
 
 Check:
-- Missing content, typos, wrong order
+- Missing content, typos, wrong order vs slide-plan.md
 - **Polite endings that slipped in** (search for 습니다, 합니다, 됩니다)
 - **Flat bullet lists** without hierarchy (should have main + sub levels)
 - **Vague/generic text** that could apply to any project (should be specific)
-- Leftover placeholder text: `uv run python -m markitdown output.pptx | grep -iE "xxxx|lorem|ipsum"`
+- Leftover placeholder text: `uv run python -m markitdown .slide-forge/build/output.pptx | grep -iE "xxxx|lorem|ipsum"`
 
 ### Visual QA
 
 **You MUST render slides to images and read every image file.** Never skip this — code alone cannot tell you if the output looks correct.
 
 ```bash
-uv run slide-forge render output.pptx output_slides/
+uv run slide-forge render .slide-forge/build/output.pptx .slide-forge/build/rendered/
 ```
 
-Then **read each PNG file** (e.g., `output_slides/slide-01.png`) and inspect visually. Use subagents for fresh eyes — even for 2-3 slides.
+Then **read each PNG file** (e.g., `.slide-forge/build/rendered/slide-01.png`) and inspect visually. Use subagents for fresh eyes — even for 2-3 slides.
 
 #### Visual Inspection Checklist (per slide image)
 
@@ -208,7 +274,7 @@ Then **read each PNG file** (e.g., `output_slides/slide-01.png`) and inspect vis
 1. 코드 생성 완료 → PPTX 생성 → 이미지 렌더링
 2. 모든 슬라이드 이미지를 읽고(Read) 위 체크리스트로 검사
 3. 발견된 레이아웃/타이포 문제만 수정 → PPTX 재생성
-4. 외부 critics (Gauge + Assayer)에게 제출
+4. 외부 critics (Gauge + Assayer + Wanderer)에게 제출
 ```
 
 **1회 렌더링 + 1회 수정까지만.** 추가 반복은 critic 피드백 후에 수행한다. Smith가 자체적으로 무한 루프를 돌지 않는다.
@@ -220,11 +286,11 @@ Then **read each PNG file** (e.g., `output_slides/slide-01.png`) and inspect vis
 ## Converting to Images
 
 ```bash
-uv run slide-forge render output.pptx
-uv run slide-forge render output.pptx ./my_slides --dpi 200
+uv run slide-forge render .slide-forge/build/output.pptx .slide-forge/build/rendered/
+uv run slide-forge render .slide-forge/build/output.pptx .slide-forge/build/rendered/ --dpi 200
 ```
 
-Creates `slide-01.png`, `slide-02.png`, etc.
+Creates `slide-01.png`, `slide-02.png`, etc. in `.slide-forge/build/rendered/`.
 
 ---
 
@@ -246,10 +312,7 @@ Not all commands work on all platforms. Choose the right tool for your environme
 |---------|----------|----------|---------|
 | `uv run slide-forge render` | **Windows only** | MS PowerPoint + `pywin32`, `pymupdf` | Full-fidelity slide → PNG (via COM) |
 | `uv run slide-forge thumbnail` | **Linux / WSL** | LibreOffice (`soffice`), `poppler-utils` (`pdftoppm`), `pillow` | Quick thumbnail grid for template analysis |
-| `uv run slide-forge add-slide` | Any | `python-pptx` | Add a content or cover slide using slide-forge template |
-| `uv run slide-forge clean` | Any | `defusedxml` | Remove orphaned files from unpacked dir |
-| `uv run slide-forge pack` | Any | `defusedxml`, `lxml` | Repack unpacked dir → .pptx with validation |
-| `uv run slide-forge unpack` | Any | `defusedxml` | Unpack .pptx → editable XML |
+| `uv run slide-forge unpack` | Any | `defusedxml` | Unpack .pptx for diagnostic XML inspection |
 | `uv run slide-forge validate` | Any | `defusedxml`, `lxml` | XSD schema validation + auto-repair |
 | slide-forge (Python API) | Any | `python-pptx` | Create .pptx from scratch via Python |
 

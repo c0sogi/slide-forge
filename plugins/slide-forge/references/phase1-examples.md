@@ -1,6 +1,6 @@
 # Phase 1 Examples — Rhetorical Strategies & Visual Specifications
 
-These examples are referenced from [SKILL.md](../SKILL.md) Phase 1 workflow. **Do not copy these** — internalize the thinking patterns.
+These examples are referenced from [SKILL.md](../skills/slide-anvil/SKILL.md) Phase 1 workflow. **Do not copy these** — internalize the thinking patterns.
 
 ---
 

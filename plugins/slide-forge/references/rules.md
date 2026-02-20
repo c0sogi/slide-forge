@@ -9,7 +9,7 @@ This is the **single source of truth** for all enforceable Slide Forge rules.
 
 ## Deck Structure
 
-- Slide 1 is always a Table of Contents (목차).
+- Slide 1 may be a Table of Contents (목차) — recommended for decks with 5+ slides, but not mandatory. The Storyteller decides based on deck length, complexity, and audience.
 - No front cover or back cover slides.
 
 ## Headers
@@ -148,7 +148,7 @@ L1 bullets within a single slide must form a **narrative arc**, not a list of in
 
 ### Inter-Slide Transitions
 
-Slides must not feel like independent articles. Each slide (except TOC) must connect to the previous one:
+Slides must not feel like independent articles. Each slide (except TOC, if present) must connect to the previous one:
 - **Implicit bridge**: the subtitle or first bullet naturally follows from the previous slide's conclusion.
 - **Explicit bridge**: referencing prior findings — e.g., "Slide 03의 격차를 해소하기 위한 접근" or "앞선 분석에서 드러난 한계를 기반으로..."
 - The audience must feel: "이 슬라이드가 나올 수밖에 없구나."

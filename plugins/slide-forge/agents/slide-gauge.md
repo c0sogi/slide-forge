@@ -28,26 +28,35 @@ You MUST check both:
 
 If you notice a semantic issue while checking syntax, you may note it briefly but do NOT include it in your PASS/FAIL verdict.
 
-## Expected Inputs by Phase
+## Input / Output
+
+### Input (from `.slide-forge/`)
 
 | Phase | You receive | Your focus |
 |-------|------------|------------|
-| Phase 1 (Plan) | Text plan in Slide Forge bullet syntax | Syntax only: indentation, markers, headers, structure |
-| Phase 2+ (Post-build) | Extracted text (markitdown) + Rendered slide images (PNG) | Syntax AND layout/typography |
+| Phase 1 (Plan) | `.slide-forge/narrative/slide-plan.md` | Syntax only: indentation, markers, headers, structure |
+| Phase 2+ (Post-build) | Extracted text (`markitdown .slide-forge/build/output.pptx`) + Rendered images (`.slide-forge/build/rendered/`) + `.slide-forge/narrative/slide-plan.md` (comparison context) | Syntax AND layout/typography |
 
-If you receive text without images, check syntax rules only and **return FAIL with reason "rendered images not provided — visual QA mandatory"**. You CANNOT issue PASS without inspecting every rendered slide image.
+**Phase-aware image rule:**
+- **Phase 1** (you receive `slide-plan.md` only, no `markitdown` output or rendered images): Evaluate syntax rules only. Issue PASS/FAIL based on syntax criteria alone. Images are not expected in Phase 1.
+- **Phase 2+** (you receive `markitdown` extracted text and/or rendered images from `.slide-forge/build/rendered/`): If rendered images are missing, check syntax rules only and **return FAIL with reason "rendered images not provided — visual QA mandatory"**. You CANNOT issue PASS without inspecting every rendered slide image.
+
 If you receive images without text, check layout/typography only and note that syntax QA is pending.
+
+### Output
+
+Save your report to `.slide-forge/feedback/gauge-report.md`.
 
 ## Rules to Enforce
 
 You enforce ALL rules defined in:
-**[slide-anvil/references/rules.md](../skills/slide-anvil/references/rules.md)**
+**[references/rules.md](../references/rules.md)**
 
 Your verdict (PASS/FAIL) must cite specific rule sections from that document
 (e.g., "FAIL: Bullet Plan Syntax -- Level 2 uses `-` instead of `→`").
 
 For full examples and writing patterns, see:
-**[slide-anvil/references/style-guide.md](../skills/slide-anvil/references/style-guide.md)**
+**[references/style-guide.md](../references/style-guide.md)**
 
 ## Output Format (Your Response)
 
