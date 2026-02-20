@@ -105,7 +105,7 @@ Subtitle-as-summary test:
 - If the subtitle contains the slide's claim, argument, or key finding, it is a summary, not a label.
 - Example of FAIL: "하위집단 분석: 다중 인스턴스에서 DT 효과 극대화" — the conclusion ("DT 효과 극대화") is crammed into the subtitle.
 - Example of FAIL: "주요 결과: DT 기반 전 방법이 Vision-only 대폭 상회" — the result IS the subtitle.
-- Fix: strip the claim out of the subtitle → `▌하위 집단 분석 결과`. Place the claim as the first L1 bullet.
+- Fix: strip the claim out of the subtitle → `▌하위 집단 분석 결과`. Place the claim as a concluding `→` line after the build-up, not in the subtitle.
 
 L1 bullet disconnection test (intra-slide cohesion):
 - L1 bullets within a single slide must form a narrative arc, not a list of independent facts.
