@@ -139,7 +139,7 @@ When tool or script failures occur during Build/QA:
 → Fix the specific line in the Python file and re-run. Do not skip to QA with a broken file.
 
 **Rendering errors** (`uv run slide-forge render` fails):
-→ PowerPoint COM unavailable: fall back to `uv run slide-forge thumbnail` (LibreOffice) or inform the user that visual QA requires manual export.
+→ Windows: verify PowerPoint is installed and accessible via COM. Linux/macOS: verify `soffice` is on PATH (`which soffice`).
 → Corrupted PPTX: re-generate from code. If the same corruption recurs, check for known slide-forge pitfalls (invalid color format, wrong EMU values).
 
 **Text extraction errors** (`markitdown` fails on a slide):

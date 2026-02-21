@@ -297,9 +297,9 @@ Creates `slide-01.png`, `slide-02.png`, etc. in `.slide-forge/build/rendered/`.
 ## Dependencies
 
 ```bash
-uv add pywin32 pymupdf pillow python-pptx defusedxml
+# Core dependencies (pymupdf, pywin32, python-pptx, etc.) are auto-installed via pyproject.toml.
+# For rendering on Linux/macOS, install LibreOffice separately (soffice must be on PATH).
 uv run pip install "markitdown[pptx]"
-# slide-forge library (PEP 723 scripts auto-install via uv run)
 ```
 
 ---
@@ -310,13 +310,10 @@ Not all commands work on all platforms. Choose the right tool for your environme
 
 | Command | Platform | Requires | Purpose |
 |---------|----------|----------|---------|
-| `uv run slide-forge render` | **Windows only** | MS PowerPoint + `pywin32`, `pymupdf` | Full-fidelity slide → PNG (via COM) |
+| `uv run slide-forge render` | **Windows, macOS, Linux** | Windows: MS PowerPoint; macOS/Linux: LibreOffice (`soffice`) | Slide → PNG rendering |
 | `uv run slide-forge thumbnail` | **Linux / WSL** | LibreOffice (`soffice`), `poppler-utils` (`pdftoppm`), `pillow` | Quick thumbnail grid for template analysis |
 | `uv run slide-forge unpack` | Any | `defusedxml` | Unpack .pptx for diagnostic XML inspection |
 | `uv run slide-forge validate` | Any | `defusedxml`, `lxml` | XSD schema validation + auto-repair |
 | slide-forge (Python API) | Any | `python-pptx` | Create .pptx from scratch via Python |
 
-**Visual QA fallback when PowerPoint is unavailable:**
-- Use `uv run slide-forge thumbnail` (requires LibreOffice) for approximate rendering
-- Or open the .pptx in LibreOffice Impress and manually export to PDF/images
-- Note: LibreOffice rendering may differ from PowerPoint (fonts, spacing, SmartArt)
+**Note:** LibreOffice rendering may differ from PowerPoint (fonts, spacing, SmartArt). Use `thumbnail` for grid-layout overviews.

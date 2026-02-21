@@ -1,7 +1,7 @@
 """Render PPTX slides to individual PNG images for visual QA.
 
-Uses MS PowerPoint COM automation (PPTX -> PDF) + PyMuPDF (PDF -> PNG).
-Requires: pip install pywin32 pymupdf
+Windows: PowerPoint COM automation (PPTX -> PDF) + PyMuPDF (PDF -> PNG).
+macOS/Linux: LibreOffice headless (PPTX -> PDF) + PyMuPDF (PDF -> PNG).
 """
 
 from __future__ import annotations
@@ -12,7 +12,7 @@ import sys
 
 
 def configure_parser(subparsers: argparse._SubParsersAction) -> None:
-    parser = subparsers.add_parser("render", help="Render PPTX slides to PNG images (Windows only)")
+    parser = subparsers.add_parser("render", help="Render PPTX slides to PNG images")
     parser.add_argument("pptx", help="Path to the .pptx file")
     parser.add_argument("output_dir", nargs="?", help="Output directory (default: <name>_slides/)")
     parser.add_argument("--dpi", type=int, default=150, help="Image resolution (default: 150)")
@@ -24,22 +24,23 @@ def _run(args: argparse.Namespace) -> None:
 
 
 def _check_dependencies() -> None:
-    missing = []
-    try:
-        import win32com.client  # noqa: F401
-    except ImportError:
-        missing.append("pywin32")
-    try:
-        import fitz  # noqa: F401
-    except ImportError:
-        missing.append("pymupdf")
-    if missing:
-        print(f"Missing dependencies: {', '.join(missing)}")
-        print(f"Install with: pip install {' '.join(missing)}")
-        sys.exit(1)
+    if sys.platform != "win32":
+        import shutil
+
+        if not shutil.which("soffice"):
+            print("LibreOffice is required for rendering on this platform.")
+            print("Install: https://www.libreoffice.org/download/")
+            sys.exit(1)
 
 
 def _pptx_to_pdf(pptx_path: str, pdf_path: str) -> None:
+    if sys.platform == "win32":
+        _pptx_to_pdf_windows(pptx_path, pdf_path)
+    else:
+        _pptx_to_pdf_soffice(pptx_path, pdf_path)
+
+
+def _pptx_to_pdf_windows(pptx_path: str, pdf_path: str) -> None:
     import pythoncom
     import win32com.client
 
@@ -56,11 +57,32 @@ def _pptx_to_pdf(pptx_path: str, pdf_path: str) -> None:
         pythoncom.CoUninitialize()
 
 
+def _pptx_to_pdf_soffice(pptx_path: str, pdf_path: str) -> None:
+    from slide_forge.cli.soffice import run_soffice
+
+    abs_pptx = os.path.abspath(pptx_path)
+    output_dir = os.path.dirname(os.path.abspath(pdf_path))
+    result = run_soffice(
+        ["--headless", "--convert-to", "pdf", "--outdir", output_dir, abs_pptx],
+        capture_output=True,
+    )
+    # soffice outputs <stem>.pdf
+    stem = os.path.splitext(os.path.basename(abs_pptx))[0]
+    soffice_pdf = os.path.join(output_dir, f"{stem}.pdf")
+
+    if result.returncode != 0 or not os.path.exists(soffice_pdf):
+        stderr = result.stderr.decode(errors="replace").strip() if result.stderr else ""
+        raise RuntimeError(f"LibreOffice PDF conversion failed (exit {result.returncode}):\n{stderr}")
+
+    if os.path.normcase(soffice_pdf) != os.path.normcase(os.path.abspath(pdf_path)):
+        os.replace(soffice_pdf, pdf_path)
+
+
 def _pdf_to_images(pdf_path: str, output_dir: str, dpi: int = 150) -> list[str]:
-    import fitz
+    import pymupdf
 
     os.makedirs(output_dir, exist_ok=True)
-    doc = fitz.open(pdf_path)
+    doc = pymupdf.open(pdf_path)
     paths = []
     for i in range(len(doc)):
         page = doc[i]

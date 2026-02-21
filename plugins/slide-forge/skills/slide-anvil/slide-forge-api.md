@@ -7,7 +7,7 @@ slide-forge is a Python library. Write a `.py` file with **PEP 723 inline metada
 ```python
 # /// script
 # requires-python = ">=3.12"
-# dependencies = ["slide-forge==1.2.0"]
+# dependencies = ["slide-forge==1.3.0"]
 # ///
 
 from slide_forge import (
@@ -722,7 +722,7 @@ Emu(914400) # direct EMU value
 ```python
 # /// script
 # requires-python = ">=3.12"
-# dependencies = ["slide-forge==1.2.0"]
+# dependencies = ["slide-forge==1.3.0"]
 # ///
 
 from pptx.util import Inches, Emu

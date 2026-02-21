@@ -4,7 +4,7 @@ Usage:
     slide-forge <command> [options]
 
 Commands:
-    render        Render PPTX slides to PNG images (Windows, requires PowerPoint)
+    render        Render PPTX slides to PNG images (Windows: PowerPoint; macOS/Linux: LibreOffice)
     thumbnail     Create thumbnail grids from slides (Linux/WSL, requires LibreOffice)
     pack          Pack an unpacked directory into a PPTX file
     unpack        Unpack a PPTX file for editing
