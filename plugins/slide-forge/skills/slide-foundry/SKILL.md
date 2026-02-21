@@ -87,6 +87,30 @@ Reference files:
 
 Smith loads the `slide-anvil` skill which links to `slide-forge-api.md`. As a fallback, the Supervisor SHOULD also include the absolute path `plugins/slide-forge/skills/slide-anvil/slide-forge-api.md` in Smith's spawn prompt, in case the skill fails to load at runtime.
 
+## Spawn Prompt Quick Reference
+
+Use this table when constructing spawn prompts. Each row lists exactly what to include. Detailed phase logic remains in the Orchestration Procedure below. If this table and the procedure conflict, the **procedure section is authoritative**.
+
+| Agent | Phase | Input files | Reference files | Key instruction | Exclude |
+|-------|-------|-------------|-----------------|-----------------|---------|
+| Storyteller | 1a (narrative) | `config.json`, source file paths | `rules.md`, `narrative-format.md`, `phase1-examples.md` | "Execute Phase 0 + 1a. Stop after `narrative-full.md`." | -- |
+| Storyteller | 1a (post-Crucible, DEEPEN) | `crucible-report.md` | `rules.md`, `narrative-format.md`, `phase1-examples.md` | "Read crucible report. Execute Phase 1b + 1c + 1d." | -- |
+| Storyteller | 1a (post-Crucible, PROCEED) | `crucible-report.md` | `rules.md`, `narrative-format.md`, `phase1-examples.md` | "Execute Phase 1c + 1d." | -- |
+| Storyteller | 1b (revision) | `merged-actions.md` | `rules.md`, `narrative-format.md`, `phase1-examples.md` | "Fix flagged issues. Do NOT rewrite unflagged slides." | -- |
+| Storyteller | 3 (escalation) | `smith-escalation.md`, `slide-plan.md`, `visual-spec.md` | -- | "Revise only affected slides." | -- |
+| Crucible | 1a | `narrative-full.md` | -- | -- | -- |
+| Gauge | 1b | `slide-plan.md` | `rules.md`, `style-guide.md` | "Phase 1 -- plan text only, no images." | -- |
+| Gauge | 3 | `extracted-text.md`, rendered images, `slide-plan.md` | `rules.md`, `style-guide.md` | -- | -- |
+| Assayer | 1b | `narrative-full.md`, `slide-plan.md` | `rules.md`, `style-guide.md` | "Phase 1 -- narrative + plan text, no images." | -- |
+| Assayer | 3 | `extracted-text.md`, rendered images, `slide-plan.md` | `rules.md`, `style-guide.md` | -- | -- |
+| Wanderer | 3 | `extracted-text.md`, rendered images | -- | "Naive reader. Evaluate from slides alone." | `slide-plan.md`, `narrative-full.md`, `visual-spec.md`, all source files |
+| Smith | 2 (build) | `slide-plan.md`, `visual-spec.md`, `sources/images/` | (via `slide-anvil` skill; fallback: `slide-forge-api.md`) | -- | -- |
+| Smith | 3 (revision) | `merged-actions.md`, `slide-plan.md`, `visual-spec.md` | (via `slide-anvil` skill; fallback: `slide-forge-api.md`) | "Fix flagged issues. Do NOT rebuild unflagged slides." | -- |
+
+**Wanderer isolation rule**: Wanderer's spawn prompt must be constructed independently -- never copy from Gauge/Assayer and edit. See [Wanderer Input Safeguard](#phase-3-build-quality-gate) in Phase 3.
+
+**Reforge note**: For content-only reforge (`/reforge` with content changes but no template change), the Supervisor skips Phase 1 and spawns Smith directly at Phase 2. The Smith rows above apply. See the Reforge section in the Orchestration Procedure for the full content-only reforge flow.
+
 ---
 
 ## Inputs / Outputs Contract
@@ -151,6 +175,14 @@ Outputs must include:
    - Instruction: "Read merged critic feedback. Execute Phase 1b critic revision: fix flagged issues in `slide-plan.md`, `visual-spec.md`, and `narrative-full.md` as needed. Do NOT rewrite unflagged slides."
    - Re-submit to gauge + assayer. Max 3 iterations.
 
+#### Phase 1b Cap Behavior
+
+If Phase 1b reaches the iteration cap (3 iterations) without both critics returning PASS:
+- **Proceed to Phase 2** with the best available version of `slide-plan.md` and `visual-spec.md`.
+- Attach a "Phase 1b Known Issues" note to `config.json` listing all unresolved FAIL items from the final Gauge/Assayer reports.
+- Smith receives these known issues as context and should avoid exacerbating them.
+- Phase 3 critics will independently re-evaluate the built PPTX — some Phase 1b issues may resolve during build, others may persist and appear in Phase 3 feedback.
+
 ### Phase 2: Build
 
 10. After Phase 1b PASS: Spawn `slide-smith` with paths to:
@@ -158,7 +190,7 @@ Outputs must include:
     - `.slide-forge/narrative/visual-spec.md`
     - `.slide-forge/sources/images/`
 11. Smith builds PPTX, renders, performs self-QA (1 round).
-12. **[Artifact Validation Gate]**: Verify `output.pptx` exists in `.slide-forge/build/`. Verify `rendered/` contains at least 1 PNG.
+12. **[Artifact Validation Gate]**: Verify `output.pptx` exists in `.slide-forge/build/`. Verify PNG count in `rendered/` equals `expected_slide_count` from `config.json`. If fewer, Smith must re-render before proceeding.
 
 ### Phase 3: Build Quality Gate
 
@@ -166,33 +198,43 @@ Outputs must include:
     ```bash
     uv run python -m markitdown .slide-forge/build/output.pptx > .slide-forge/build/extracted-text.md
     ```
-14. Spawn all three Phase 3 critics **in parallel**, passing `.slide-forge/build/extracted-text.md` as the extracted text source:
+14. Spawn Phase 3 critics **in parallel**, passing `.slide-forge/build/extracted-text.md` as the extracted text source:
+
+    **Gauge and Assayer** (can run in parallel):
     - `slide-gauge` with `extracted-text.md` + rendered image paths + `slide-plan.md` (context).
       Reference paths: `rules.md`, `style-guide.md` (see [Reference Files](#reference-files)).
       Output: **PASS** or **FAIL**, saved to `.slide-forge/feedback/gauge-report.md`.
     - `slide-assayer` with `extracted-text.md` + rendered image paths + `slide-plan.md` (context).
       Reference paths: `rules.md`, `style-guide.md` (see [Reference Files](#reference-files)).
       Output: **PASS** or **FAIL**, saved to `.slide-forge/feedback/assayer-report.md`.
-    - `slide-wanderer` with `extracted-text.md` + rendered image paths only.
-      **WANDERER INPUT SAFEGUARD — STOP AND VERIFY before spawning:**
-      1. The spawn prompt for Wanderer MUST contain ONLY these file paths: `extracted-text.md` and rendered image paths (`rendered/slide-*.png`).
-      2. The spawn prompt MUST NOT contain any of these: `slide-plan.md`, `narrative-full.md`, `visual-spec.md`, `source-index.json`, or any path under `.slide-forge/sources/`.
-      3. If you are copy-pasting from the Gauge/Assayer spawn prompt above, DELETE `slide-plan.md` from the file list before sending.
-      Note to agent: "You are a naive reader. Do NOT read `narrative-full.md`, `slide-plan.md`, or any source documents. Evaluate audience comprehension from the slides alone."
-      Output: **PASS** or **FAIL**, saved to `.slide-forge/feedback/wanderer-report.md`.
-15. If any critic returns **FAIL**: merge feedback into `.slide-forge/feedback/merged-actions.md`, pass to Smith for revision.
-16. **[Escalation Check]**: After Smith revision, check if `.slide-forge/feedback/smith-escalation.md` exists and is non-empty.
-    - **No escalation**: re-submit to critics (step 13).
+
+    **Wanderer** (runs in parallel with above, but uses a DIFFERENT input set):
+
+    Construct this spawn prompt FROM SCRATCH -- do NOT copy from the Gauge/Assayer block above.
+
+    - `slide-wanderer` with ONLY these inputs:
+      1. `extracted-text.md`
+      2. Rendered image paths (`rendered/slide-*.png`)
+    - NO reference files. NO `slide-plan.md`. NO `narrative-full.md`. NO `visual-spec.md`. NO source files.
+    - Note to agent: "You are a naive reader. Do NOT read `narrative-full.md`, `slide-plan.md`, or any source documents. Evaluate audience comprehension from the slides alone."
+    - Output: **PASS** or **FAIL**, saved to `.slide-forge/feedback/wanderer-report.md`.
+15. **[Critic Synchronization Barrier]**: Before merging, the Supervisor MUST verify that ALL parallel critics have completed and their report files exist:
+    - Confirm `gauge-report.md`, `assayer-report.md`, and `wanderer-report.md` all exist in `.slide-forge/feedback/`.
+    - Confirm each report file is non-empty and contains a verdict line (`PASS` or `FAIL`).
+    - If any report is missing or incomplete, wait for the critic to finish before proceeding. Do NOT merge with partial reports — this produces incorrect deduplication and tagging.
+16. If any critic returns **FAIL**: merge feedback into `.slide-forge/feedback/merged-actions.md`, pass to Smith for revision.
+17. **[Escalation Check]**: After Smith revision, check if `.slide-forge/feedback/smith-escalation.md` exists and is non-empty.
+    - **No escalation**: re-submit to critics (step 14).
     - **Escalation exists**: **[Spawn Storyteller — Phase 3 targeted revision]** with:
       - paths to `smith-escalation.md`, `slide-plan.md`, `visual-spec.md`
       - Instruction: "Read escalation report. Revise only affected slides in `slide-plan.md` and `visual-spec.md`. Do NOT rewrite unaffected slides."
       - After Storyteller revision, re-spawn Smith to rebuild from revised plan.
-      - Delete `smith-escalation.md`, then re-submit to critics (step 13).
-17. Max 3 iterations total (escalation counts as part of the iteration, not a separate loop).
+      - Delete `smith-escalation.md`, then re-submit to critics (step 14).
+18. Max 3 iterations total (escalation counts as part of the iteration, not a separate loop). See [Iteration Counter Definition](#iteration-counter-definition) for what constitutes one iteration.
 
 ### Phase 4: Delivery
 
-18. When all three Phase 3 critics PASS (or iteration cap reached):
+19. When all three Phase 3 critics PASS (or iteration cap reached — see [Advisory Downgrade Gate Rule](#advisory-downgrade-gate-rule)):
     - Deliver `.slide-forge/build/output.pptx` to the user.
     - If cap was reached, attach a "Known Issues" section from the final critic reports.
 
@@ -212,11 +254,20 @@ Lightweight checks the supervisor runs before phase transitions:
 
 | Transition | Validation |
 |------------|-----------|
-| Phase 1a: narrative → Crucible | `narrative-full.md` exists, contains `## Slide` header(s) |
-| Phase 1a: compression → Phase 1b | `slide-plan.md` exists with `[Major Title]` + `▌` block(s). `visual-spec.md` exists |
-| Phase 1b → Phase 2 | Gauge PASS + Assayer PASS |
-| Phase 2 → Phase 3 | `output.pptx` exists in `.slide-forge/build/`. `rendered/` has 1+ PNG |
-| Phase 3 → Phase 4 | Gauge PASS + Assayer PASS + Wanderer PASS |
+| Phase 1a: narrative → Crucible | `narrative-full.md` exists, contains `## Slide` header(s). **Completeness**: count `## Slide` headers — record as `expected_slide_count` in `config.json`. |
+| Phase 1a: compression → Phase 1b | `slide-plan.md` exists with `[Major Title]` + `▌` block(s). `visual-spec.md` exists. **Completeness**: count `[Major Title]` blocks in `slide-plan.md` — must match `expected_slide_count` from narrative. |
+| Phase 1b → Phase 2 | Gauge PASS + Assayer PASS (or Phase 1b iteration cap reached — see [Phase 1b Cap Behavior](#phase-1b-cap-behavior)) |
+| Phase 2 → Phase 3 | `output.pptx` exists in `.slide-forge/build/`. **Completeness**: count PNGs in `rendered/` — must equal number of `[Major Title]` blocks in `slide-plan.md`. If count mismatches, Smith must re-render before proceeding. |
+| Phase 3 → Phase 4 | Gauge PASS + Assayer PASS + Wanderer PASS (or all blocking items resolved — see [Advisory Downgrade Gate Rule](#advisory-downgrade-gate-rule)) |
+
+### Slide Count Derivation
+
+The Supervisor derives and tracks `expected_slide_count` to prevent incomplete artifacts from passing gates:
+
+1. **Source of truth**: Count `## Slide` headers in `narrative-full.md` after Phase 1a completes. Store in `config.json` as `expected_slide_count`.
+2. **Phase 1a → 1b**: Count `[Major Title]` blocks in `slide-plan.md`. Must equal `expected_slide_count`. If fewer, Storyteller omitted slides — block transition and request completion.
+3. **Phase 2 → 3**: Count PNG files in `rendered/`. Must equal `expected_slide_count`. If fewer, Smith's render was partial — block transition and request re-render.
+4. **Phase 3 critics**: Each critic should verify they received evidence for all slides. If `extracted-text.md` contains fewer slide sections than expected, flag it in their report.
 
 ---
 
@@ -270,7 +321,7 @@ Storyteller must respond to EVERY reflection prompt below:
 
 The Storyteller's response is part of the narrative artifact — it documents the strategic reasoning behind the deck. This reasoning is visible to Gauge and Assayer for context but is not subject to their PASS/FAIL criteria. Wanderer does NOT receive this reasoning (it must remain a naive reader).
 
-### Gauge/Assayer/Wanderer Feedback (Phase 1b/3 — Quality Iteration)
+### Feedback Delivery and Merge (Phase 1b/3 -- Quality Iteration)
 
 When passing Critic output back to the Actor (Storyteller in Phase 1b, Smith in Phase 3) for revision, use this structure. In Phase 1b, only Gauge and Assayer sections are present. In Phase 3, all three critics are included:
 
@@ -278,109 +329,92 @@ When passing Critic output back to the Actor (Storyteller in Phase 1b, Smith in 
 ## Iteration N Feedback
 
 ### Slide-Gauge: [PASS|FAIL]
-[Full Slide-Gauge output — verdict, slide-by-slide issues, fix instructions, minimum patch]
+[Full Slide-Gauge output -- verdict, slide-by-slide issues, fix instructions, minimum patch]
 
 ### Slide-Assayer: [PASS|FAIL]
-[Full Slide-Assayer output — verdict, prioritized issues, slide-by-slide critique, flow repair]
+[Full Slide-Assayer output -- verdict, prioritized issues, slide-by-slide critique, flow repair]
 
 ### Slide-Wanderer: [PASS|FAIL] (Phase 3 only)
-[Full Slide-Wanderer output — verdict, comprehension summary, slide-by-slide notes, concept introduction map]
-
-### Required Actions (merged, deduplicated, with issue IDs)
-1. [G-01] [Slide N]: [concrete action] — NEW
-2. [A-03] [Slide M]: [concrete action] — RECURRING (from iteration N-1)
-3. [W-01] [Slide K]: [concrete action] — NEW
-...
-
-### Regression Alert (if any)
-Items that were PASS in iteration N-1 but FAIL in iteration N:
-- [G-02] [Slide K]: [what regressed and likely cause]
+[Full Slide-Wanderer output -- verdict, comprehension summary, slide-by-slide notes, concept introduction map]
 ```
-
-Issue ID format:
-- `G-##` for Slide-Gauge issues, `A-##` for Slide-Assayer issues, `W-##` for Slide-Wanderer issues.
-- IDs persist across iterations. Reuse the same ID when the same issue recurs.
-- Tag each item: `NEW` (first appearance), `RECURRING` (seen before, not fixed), `REGRESSED` (was PASS, now FAIL).
 
 Rules:
-- Pass **all** Critic outputs to the Actor unabridged. Do not summarize or filter — the Actor needs full context to avoid regressions.
-- Append a **merged action list** that deduplicates overlapping issues and orders them by slide number.
-- **Deconfliction rule**: If Wanderer and Assayer flag the same slide for the same issue type (jargon, comprehension, transitions), keep only the Assayer item (higher priority). Wanderer items are unique only when they identify comprehension gaps that Assayer cannot detect (e.g., concept prerequisite ordering, visual self-explanatoriness, cognitive load).
-- If a Slide-Assayer fix would require a Slide-Gauge violation, note it in the merged list with the resolution: "restructure (split slide / adjust heading)" — never compromise Syntax rules.
-- **Wanderer conflict downgrade**: If a Wanderer fix (W-##) would conflict with a Gauge or Assayer constraint, downgrade the W-## item to advisory (include in "Known Issues" but not blocking). Gauge and Assayer fixes always take priority.
+- Pass **all** Critic outputs to the Actor unabridged. Do not summarize or filter -- the Actor needs full context to avoid regressions.
+- If a Slide-Assayer fix would require a Slide-Gauge violation, note it in the merged list with the resolution: "restructure (split slide / adjust heading)" -- never compromise Syntax rules.
+- **Wanderer conflict downgrade**: If a Wanderer fix would conflict with a Gauge or Assayer constraint, downgrade the Wanderer item to advisory (include in "Advisory" section, not blocking). Gauge and Assayer fixes always take priority.
 - The Actor must address **every item** in the merged action list before re-submitting.
-- Save the merged feedback to `.slide-forge/feedback/merged-actions.md`.
 
-### Feedback Merge Algorithm (Step-by-Step)
+#### Feedback Merge Procedure
 
-The Supervisor MUST follow this mechanical procedure when merging critic reports into `merged-actions.md`. Do not improvise — follow the steps in order.
+The Supervisor follows these three steps to produce `merged-actions.md`. The goal is a prioritized action list, not a perfectly deduplicated merge -- the Actor (Smith/Storyteller) handles overlapping items naturally when fixing.
 
-**Inputs**: `gauge-report.md`, `assayer-report.md`, `wanderer-report.md` (Phase 3 only). In Phase 1b, only `gauge-report.md` and `assayer-report.md` are present — skip all Wanderer-related comparisons in Steps 2-3. If this is iteration 2+, also read the previous `merged-actions.md` for tagging in Step 4.
-
-**Step 1 — Extract**: Read each critic report. For each issue found, create a raw entry:
+**Step 1 -- Collect and label**: Read each critic report. Copy every actionable item (anything requiring a fix) into a flat list. Label each with a sequential number, its source, and the slide number:
 ```
-[Source]-[NN] | Slide [N] | [issue description] | [fix instruction]
+#1 [Slide N] [G]: [issue + fix instruction from Gauge]
+#2 [Slide N] [A]: [issue + fix instruction from Assayer]
+#3 [Slide N] [W]: [issue + fix instruction from Wanderer]  (Phase 3 only)
 ```
-Where `[Source]` is `G` (Gauge), `A` (Assayer), or `W` (Wanderer). Number issues sequentially per source (G-01, G-02, ..., A-01, A-02, ..., W-01, W-02, ...).
+Sequential numbers (`#1`, `#2`, ...) reset each iteration. They exist only to make cross-iteration comparison possible (see Step 2 and Termination Rules).
 
-**Step 2 — Deduplicate**: Compare all entries pairwise. Two entries are duplicates if they target the same slide AND describe the same issue type. When duplicates are found:
-- If Gauge + Assayer overlap: keep the Gauge item (syntax priority), drop the Assayer item, note "merged with A-##".
-- If Gauge + Wanderer overlap: keep the Gauge item, drop the Wanderer item, note "merged with W-##".
-- If Assayer + Wanderer overlap on the same issue type (jargon, comprehension, transitions): keep the Assayer item (higher priority per Deconfliction Rule), drop the Wanderer item, note "merged with W-##".
-- If Wanderer flags something that neither Gauge nor Assayer flagged (concept prerequisite ordering, visual self-explanatoriness, cognitive load): keep the Wanderer item — this is Wanderer's unique contribution.
+**Step 2 -- Apply priority rules**: Review the collected list and apply these three rules:
+1. **Wanderer conflicts**: If a Wanderer item [W] on a slide would contradict a Gauge or Assayer item on the same slide, move the [W] item to an "Advisory" section at the bottom. Gauge and Assayer always win.
+2. **Iteration tagging** (iteration 2+ only): Compare against the previous `merged-actions.md`. Match items across iterations by **slide number + source label** (e.g., an item on Slide 3 from [G] in iteration 1 corresponds to an item on Slide 3 from [G] in iteration 2 if it addresses the same underlying issue). Mark matched items as RECURRING (existed before, not fixed) or REGRESSED (was passing, now failing). New items need no tag.
+3. **Sort**: REGRESSED items first, then RECURRING, then new items. Within each group, sort by slide number.
 
-**Step 3 — Deconflict**: Check each remaining Wanderer item (W-##) against all Gauge and Assayer constraints:
-- If applying the W-## fix would violate a Gauge rule or contradict an Assayer fix: downgrade W-## to advisory. Mark it `[ADVISORY]` and move it to a "Known Issues" subsection at the bottom. It is not blocking.
-- If no conflict exists: keep W-## as a required action.
-
-**Step 4 — Tag iteration status** (skip for iteration 1):
-- Compare each item against the previous `merged-actions.md`:
-  - Item not present before: tag `NEW`
-  - Item present before and not fixed: tag `RECURRING`
-  - Item was PASS in previous iteration but is now FAIL: tag `REGRESSED`
-- First iteration items are all tagged `NEW`.
-
-**Step 5 — Sort**: Sort all required actions by:
-1. Priority: `REGRESSED` first, then `RECURRING`, then `NEW`
-2. Within each priority group: by slide number ascending
-3. Within the same slide: Gauge items first, then Assayer, then Wanderer
-
-**Step 6 — Format output**: Write `merged-actions.md` using this template. Note: `merged-actions.md` contains the merged action list only. The unabridged critic reports remain in their individual files (`gauge-report.md`, `assayer-report.md`, `wanderer-report.md`) and are passed separately to the Actor in the spawn prompt.
+**Step 3 -- Write output**: Save to `.slide-forge/feedback/merged-actions.md` using this template:
 
 ```
-## Iteration [N] — Merged Actions
+## [Phase] Iteration [N] -- Merged Actions
 
 ### Required Actions
-1. [G-01] [Slide 2]: [concrete fix instruction] — NEW
-2. [A-03] [Slide 3]: [concrete fix instruction] — RECURRING (iteration 1, 2)
-3. [W-01] [Slide 5]: [concrete fix instruction] — NEW
+#1 [Slide 2] [G]: [fix instruction]
+#2 [Slide 3] [A]: [fix instruction] -- RECURRING
+#3 [Slide 5] [W]: [fix instruction]
 ...
 
 ### Regression Alert
-Items that were PASS in iteration [N-1] but FAIL now:
-- [G-02] [Slide 4]: [what regressed and likely cause]
-(If no regressions: "None.")
+(Items that were passing but now fail. If none: "None.")
+- #4 [Slide 4] [G]: [what regressed] -- REGRESSED
 
-### Known Issues (Advisory — not blocking)
-- [W-03] [Slide 7]: [issue description] — downgraded: conflicts with [G-01]
-(If no advisory items: omit this section.)
-
-### Merge Log
-- A-05 merged with W-02 (same slide, same issue type: jargon)
-- W-04 downgraded to advisory (fix conflicts with Gauge rule: subtitle length)
-(If no merges or downgrades: omit this section.)
+### Advisory (not blocking)
+(Wanderer items downgraded due to conflict with Gauge/Assayer. Omit section if none.)
+- #5 [Slide 7] [W]: [issue] -- conflicts with Gauge rule on same slide
 ```
 
-**Step 7 — Save**: Write the completed output to `.slide-forge/feedback/merged-actions.md`. If a previous version exists, overwrite it entirely (the iteration number and tags preserve history).
+Before overwriting, rename the existing `merged-actions.md` to `merged-actions-iter-[N-1].md` to preserve history for iteration tagging.
+
+**Important**: The unabridged critic reports remain in their individual files (`gauge-report.md`, `assayer-report.md`, `wanderer-report.md`). The Actor receives BOTH the individual reports AND `merged-actions.md`. The merged list tells the Actor what to fix and in what order; the individual reports provide full context for each fix.
+
+Save the merged feedback to `.slide-forge/feedback/merged-actions.md`.
 
 ---
 
 ## Iteration Termination
 
+### Iteration Counter Definition
+
+An **iteration** is defined as one complete **critic execution round** — the cycle where all applicable critics run and produce reports. Activities between critic rounds (Smith rebuilds, Storyteller targeted revisions, escalation handling) are part of the current iteration, not separate iterations.
+
+Example for Phase 3:
+- Iteration 1: critics run → FAIL → Smith fixes → escalation → Storyteller revises → Smith rebuilds (all part of iteration 1)
+- Iteration 2: critics re-run → FAIL → Smith fixes (all part of iteration 2)
+- Iteration 3: critics re-run → PASS or cap reached
+
+The counter increments only when critics are re-spawned (steps 7-8 in Phase 1b, step 14 in Phase 3).
+
+### Termination Rules
+
 - **Success**: all Phase 3 Critics (Gauge + Assayer + Wanderer) return PASS → ship the deck.
-- **Cap reached** (default 3 iterations per phase): ship the best version. Attach a "Known Issues" section listing all unresolved FAIL items from the final Critic pass (including downgraded W-## advisory items).
-- **No progress**: if the same issue IDs (`G-##`, `A-##`, or `W-##`) remain tagged `RECURRING` across 2 consecutive iterations with no meaningful change in the fix attempt, escalate to the user rather than looping further.
+- **Cap reached** (default 3 iterations per phase): ship the best version. Attach a "Known Issues" section listing all unresolved FAIL items from the final Critic pass (including downgraded advisory items).
+- **No progress**: if items with the same slide number and source label (e.g., `[Slide 3] [G]`) remain tagged `RECURRING` across 2 consecutive iterations with no meaningful change in the fix attempt, escalate to the user rather than looping further.
 - **Regression detected**: if a previously PASS item becomes FAIL (tagged `REGRESSED`), prioritize it above all `NEW` issues in the next iteration. If 3+ items regress in a single iteration, pause and escalate to the user — the revision strategy may need rethinking.
+
+### Advisory Downgrade Gate Rule
+
+When all **blocking** items in `merged-actions.md` are resolved but **advisory** items remain (downgraded W-## items), the phase outcome depends on the critics' raw verdicts:
+- If Gauge returns PASS and Assayer returns PASS, the phase is **PASS_WITH_ADVISORIES** — proceed to the next phase. Advisory items are included in the delivery as "Known Issues" but do not block progress.
+- If Gauge or Assayer returns FAIL (regardless of Wanderer), the phase remains **FAIL** — continue iterating.
+- Wanderer's verdict alone does not block phase transition if all its blocking items were downgraded to advisory during deconfliction. The Supervisor treats the Wanderer contribution as resolved once its blocking items are either fixed or downgraded.
 
 ## Critic Priority Rules (How Conflicts Resolve)
 
@@ -405,7 +439,22 @@ When editing an existing presentation (`/slide-forge:reforge`), the supervisor f
 The first step in reforge is always: "이 변경은 구조적 변경(슬라이드 추가/삭제/순서변경)인가, 내용 수정(데이터 갱신/텍스트 교정)인가?"
 
 - **Structural**: Run the full pipeline from Phase 1a.
-- **Content**: Skip to Phase 2. Smith reads existing `.slide-forge/narrative/` artifacts and applies the requested edits directly.
+- **Content**: Skip to Phase 2, but first run the **Artifact Freshness Check** below.
+
+### Artifact Freshness Check (Content-Only Reforge)
+
+Before Smith starts a content-only reforge, the Supervisor MUST verify that existing `.slide-forge/narrative/` artifacts match the current PPTX:
+
+1. **Extract baseline**: Run `markitdown` on the existing PPTX to get current slide text.
+2. **Compare slide count**: Count slides in the `markitdown` output and compare against `[Major Title]` blocks in `slide-plan.md`. If counts differ, the artifacts are stale.
+3. **Compare slide titles**: Check that the title of each slide in the extracted text approximately matches the corresponding `[Major Title]` in `slide-plan.md`. Minor wording differences are acceptable; completely different titles indicate staleness.
+4. **On mismatch**:
+   - Warn the user: "기존 narrative artifacts와 현재 PPTX 사이에 불일치가 감지되었습니다. 구조적 변경 경로로 전환하시겠습니까?"
+   - If user confirms: reroute to the **Structural** path (full pipeline from Phase 1a).
+   - If user declines: proceed with content-only reforge, but note the mismatch as a known risk in `config.json`. Smith should use the extracted text as the primary reference, with `slide-plan.md` as secondary context only.
+5. **On match**: proceed normally — Smith reads `slide-plan.md` and applies edits.
+
+This check prevents Smith from working with stale plans that no longer reflect the actual deck content (e.g., after manual edits in PowerPoint).
 
 ---
 

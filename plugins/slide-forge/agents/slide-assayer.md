@@ -61,6 +61,24 @@ Depth test:
 - Discussion-worthiness: would this slide prompt a question or comment from the audience? If not, it lacks substance.
 - The presenter should NOT need to be present for the slide's message to be understood.
 
+Slide necessity test (narrative-level justification):
+- For EVERY slide, apply the adversarial question: "이 슬라이드를 삭제했을 때, 전체 발표의 설득력이 약해지는가?" If the answer is no — the deck's argument survives intact without this slide — it is a fail.
+- The test is a removal thought experiment, not a confirmation exercise. Do NOT ask "why does this slide exist?" — that invites post-hoc rationalization. Instead, mentally remove the slide and evaluate the damage.
+- A slide fails the necessity test when it meets ANY of these conditions:
+  - **Redundant**: its key message is already delivered by another slide with equal or greater force.
+  - **Tangential**: it introduces a topic that does not advance the deck's core argument or serve as necessary context for a later slide.
+  - **Dilutive**: it weakens the narrative's momentum by interrupting the argumentative arc without adding proportionate value.
+- **Guard against over-removal** — these slides are necessary even if they appear thin:
+  - **Setup slides**: slides that establish context, definitions, or scope required by subsequent slides. Test: "이 슬라이드 없이 다음 슬라이드를 이해할 수 있는가?" If no, the setup slide is necessary.
+  - **Bridge slides**: slides that pivot the narrative between major sections (e.g., from problem analysis to solution proposal). Test: "이 슬라이드 없이 전환이 자연스러운가?" If no, the bridge is necessary.
+  - **Limitation/caveat slides**: slides that preempt audience objections. Removing them may make the deck feel overclaiming.
+- When a slide fails the necessity test, recommend ONE of:
+  - **Remove**: the slide contributes nothing; delete it entirely.
+  - **Absorb**: the slide's content has value but not enough for a standalone slide; merge key points into a specified adjacent slide.
+  - **Defend**: the slide serves a structural role not immediately obvious — Storyteller must strengthen content to make necessity self-evident.
+- In Phase 1 (plan review), evaluate necessity against the full narrative arc (`narrative-full.md` + `slide-plan.md`).
+- In Phase 3 (post-build), necessity failures are escalated to Storyteller (Smith cannot remove or absorb slides).
+
 Continuity test (inter-slide connections):
 - No abrupt topic jumps.
 - Every slide (except TOC, if present) must connect to the previous slide — at minimum implicitly.
@@ -97,26 +115,11 @@ Question-form title/bullet test:
 - Sequential question bullets ("충분한가? → 보완하는가? → 어떻게?") make the slide read like a quiz, not a narrative — flag the entire slide.
 - Fix: compress to a topic label. "공간 근접성 단독으로 충분한가?" → "공간 근접성 단독 성능" or "ROI-Nearest 단독 평가". (NOT a verbose sentence — keep it as a concise noun phrase.)
 
-Verbose descriptive title test:
-- Subtitles that read as full sentences or clauses with verb structures are a fail.
-- Detection: if the subtitle has subject-object-verb structure, contains ~를/~을 + verb (~돌파/~검증/~해소/~수행), or exceeds 8 Korean words, it is verbose.
-- Examples of FAIL: "비전 단독의 구조적 한계를 DT 기하 사전 정보로 돌파", "외형 기반 인식의 한계가 가장 극명한 조건에서 검증"
-- Examples of PASS: "DT 기하 정보 기반 접근", "검증 환경: T-LESS 벤치마크"
-- Fix: strip verbs and compress to a noun-phrase topic label (2-8 words).
-
-Concatenation title test:
-- Subtitles joining multiple concepts with `+`, long `및/과` chains, or em-dash (`—`) extensions are a fail.
-- Detection: subtitle contains `+`, or has `—` followed by a second clause, or lists 3+ concepts.
-- Example of FAIL: "Soft Gating with Safety Retention + 복합 기하 스코어링", "5가지 DT 기준선 — 기하 신호별 기여 분리를 위한 가설 검정 프레임"
-- Fix: pick the dominant concept as the subtitle. If both matter equally, split into two slides.
-
-Subtitle-as-summary test:
-- The subtitle must NAME the topic, not DELIVER the slide's message or conclusion.
-- The subtitle answers "이 슬라이드는 무엇에 대한 것인가?" — NOT "이 슬라이드에서 말하고자 하는 바가 뭔가?"
-- If the subtitle contains the slide's claim, argument, or key finding, it is a summary, not a label.
-- Example of FAIL: "하위집단 분석: 다중 인스턴스에서 DT 효과 극대화" — the conclusion ("DT 효과 극대화") is crammed into the subtitle.
-- Example of FAIL: "주요 결과: DT 기반 전 방법이 Vision-only 대폭 상회" — the result IS the subtitle.
-- Fix: strip the claim out of the subtitle → `▌하위 집단 분석 결과`. Place the claim as a concluding `→` line after the build-up, not in the subtitle.
+Subtitle semantic test (structural form is Gauge's scope):
+- Gauge enforces subtitle form rules (word count, verb structure, concatenation). Do NOT duplicate those checks.
+- Your ONLY subtitle responsibility: if the subtitle contains the slide's KEY CLAIM or CONCLUSION (not just the topic), flag it. The subtitle should name the topic; the claim belongs in a concluding arrow line in the body.
+- Example of what YOU flag: "하위집단 분석: 다중 인스턴스에서 DT 효과 극대화" -- the conclusion ("DT 효과 극대화") is embedded in the subtitle. Fix: move claim to body, subtitle becomes "하위 집단 분석 결과".
+- Example of what you SKIP (Gauge handles it): verbose sentence-form subtitle, concatenation with +, word count violations.
 
 L1 bullet disconnection test (intra-slide cohesion):
 - L1 bullets within a single slide must form a narrative arc, not a list of independent facts.
@@ -157,3 +160,4 @@ When you propose rewrites:
 - Overclaiming: implying causality or generality without evidence.
 - Missing limitations: no honest constraints/trade-offs.
 - Structural mismatch: a slide that should be split (two unrelated arguments) or merged (too thin to stand alone). When caught in Phase 3, Smith will escalate to Storyteller.
+- Narrative dead weight: a slide that passes all quality checks (clear message, good depth, proper transitions) but whose removal would not weaken the overall argument. When caught in Phase 1b, Storyteller handles directly. When caught in Phase 3, Smith will escalate to Storyteller.

@@ -41,9 +41,10 @@ For **structural changes** with agents (slide-foundry):
 
 For **content changes** with agents:
 1. Skip Storyteller entirely
-2. Smith reads existing `.slide-forge/narrative/` artifacts
-3. Smith modifies `create_slides.py` and rebuilds the PPTX
-4. **Phase 3 — Build Quality Gate**: gauge + assayer + wanderer on result → PASS/FAIL
+2. **Artifact Freshness Check**: Run `markitdown` on existing PPTX, compare slide count and titles against `slide-plan.md`. If mismatch detected, warn user and optionally reroute to structural path. (See slide-foundry SKILL.md [Artifact Freshness Check] for details.)
+3. Smith reads existing `.slide-forge/narrative/` artifacts
+4. Smith modifies `create_slides.py` and rebuilds the PPTX
+5. **Phase 3 — Build Quality Gate**: gauge + assayer + wanderer on result → PASS/FAIL
 
 Without agents (slide-anvil Enhanced Smith Fallback):
 1. Analyze existing presentation (`markitdown` for text, `thumbnail` for layouts)

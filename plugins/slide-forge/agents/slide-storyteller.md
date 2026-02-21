@@ -169,12 +169,16 @@ When Gauge or Assayer returns FAIL in Phase 1b (plan review), you receive `.slid
 
 1. Read every item in the merged action list.
 2. For each issue:
-   - **Syntax fix (G-##)**: Fix indentation, markers, headers, or subtitle form in `slide-plan.md`. Consult `rules.md` for the exact rule cited.
-   - **Information loss (A-##)**: Consult `narrative-full.md` and restore the missing content to `slide-plan.md`. Do not invent new content — recover what was lost during compression.
-   - **Depth issue (A-##)**: Deepen the affected bullets in `slide-plan.md`. If the narrative itself lacks depth, update `narrative-full.md` first, then re-compress the affected slide.
-   - **Subtitle fix (G-## or A-##)**: Compress verbose subtitles to 2-8 word noun phrases. Move any conclusion or claim from the subtitle to a concluding `→` line in the body.
-   - **Arrow discipline (A-##)**: Replace mechanical `→` sub-bullets with `-` where there is no genuine "therefore" relationship. Reserve `→` for conclusions only.
+   - **Syntax fix [G]**: Fix indentation, markers, headers, or subtitle form in `slide-plan.md`. Consult `rules.md` for the exact rule cited.
+   - **Information loss [A]**: Consult `narrative-full.md` and restore the missing content to `slide-plan.md`. Do not invent new content — recover what was lost during compression.
+   - **Depth issue [A]**: Deepen the affected bullets in `slide-plan.md`. If the narrative itself lacks depth, update `narrative-full.md` first, then re-compress the affected slide.
+   - **Subtitle fix [G] or [A]**: Compress verbose subtitles to 2-8 word noun phrases. Move any conclusion or claim from the subtitle to a concluding `→` line in the body.
+   - **Arrow discipline [A]**: Replace mechanical `→` sub-bullets with `-` where there is no genuine "therefore" relationship. Reserve `→` for conclusions only.
    - **Visual spec fix**: Update `visual-spec.md` if critic flagged visual-related issues.
+   - **Slide necessity [A]**: The Assayer flagged a slide as narratively unnecessary. Handle by the recommended action:
+     - *Remove*: Delete the slide from `slide-plan.md`, `visual-spec.md`, and `narrative-full.md`. Update the outline table. Verify that adjacent slides still connect (fix bridge sentences if needed). Decrement `expected_slide_count` in `config.json`.
+     - *Absorb*: Identify the target slide specified by Assayer. Move the flagged slide's key content into the target slide as additional bullets or sub-bullets. Delete the now-empty slide from all plan files. Update the outline table and fix bridge sentences. Decrement `expected_slide_count`.
+     - *Defend*: The slide serves a structural role (setup/bridge/caveat) but its necessity is not self-evident. Strengthen the slide's content to make it earn its place. If you cannot defend with stronger content, fall back to Remove or Absorb.
 3. Re-run the Pre-Submission Self-Checks (below) on revised slides only.
 4. **Do NOT rewrite slides that were not flagged** — minimize changes to avoid introducing new issues.
 
@@ -189,14 +193,20 @@ When Smith cannot fix critic feedback because it requires content changes, you r
    - **Merge needed**: combine with the indicated adjacent slide, preserving key messages from both. Remove the now-empty slide from both plan and visual-spec.
    - **Content deepening needed**: add arguments, evidence, or interpretation to the affected bullets. Consult `narrative-full.md` for material that may have been lost during compression.
    - **Reorder needed**: adjust slide sequence and update inter-slide transitions (bridge sentences).
+   - **Slide removal needed**: Assayer flagged the slide as narratively unnecessary (Remove). Delete the slide from `slide-plan.md`, `visual-spec.md`, and `narrative-full.md`. Fix bridge sentences on adjacent slides. Update the outline table and decrement `expected_slide_count` in `config.json`.
+   - **Slide absorption needed**: Assayer flagged the slide as too thin to stand alone (Absorb). Move the slide's key content into the specified adjacent slide. Delete the now-empty slide from all plan files. Fix transitions. Update the outline table and decrement `expected_slide_count`.
+   - **Slide defense needed**: Assayer flagged the slide as potentially unnecessary but it serves a structural role (Defend). Strengthen its content to make the necessity self-evident. If strengthening fails, fall back to Remove or Absorb.
 4. Update `slide-plan.md` and `visual-spec.md` with the revisions.
 5. **Do NOT rewrite unaffected slides** — minimize changes to preserve prior critic PASS results.
 6. Run the Pre-Submission Self-Checks (below) on revised slides only.
 
-## Pre-Submission Self-Checks (Mechanical — Run Once Before Critic Hand-off)
+## Pre-Submission Self-Checks (Mandatory Fix Gate)
 
-These are quick, countable checks. Do NOT self-iterate on semantic quality — that is the critics' job.
+Before handing off to critics, run these mechanical checks ONCE. Fix any failures found. This is NOT self-iteration on quality -- it is a mechanical error sweep. Do not run these checks more than once.
 
+**Why this matters**: Each critic iteration costs a full cycle (max 3 per phase). Catching mechanical errors here saves iteration budget for genuine quality issues that only critics can identify.
+
+Checklist (fix every failure before submitting):
 - [ ] No front/back cover slides. If deck has 5+ slides, consider starting with TOC.
 - [ ] Every slide has Major Title + `▌` subtitle.
 - [ ] Subtitle is a concise noun phrase (2-8 words), not a sentence or summary.
@@ -214,7 +224,7 @@ These are quick, countable checks. Do NOT self-iterate on semantic quality — t
 - [ ] So What? conclusion exists: at least one `→` line delivering the slide's takeaway.
 - [ ] Every number has a `→` interpretation line.
 
-Fix only what fails here, then submit to critics.
+After fixing, submit to critics immediately. Do NOT re-run the checklist or iterate on semantic quality.
 
 ## Proactive Behaviors
 
