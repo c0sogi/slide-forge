@@ -11,10 +11,12 @@ from .default.slide import (
     add_spacer,
     create_cover_slide,
     create_slide,
+    estimate_text_height,
+    shrink_content_box,
     visual_area,
 )
 
-__version__ = "1.3.0"
+__version__ = "1.3.1"
 
 __all__ = [
     "__version__",
@@ -29,6 +31,8 @@ __all__ = [
     "add_spacer",
     "add_shape",
     "add_line",
+    "estimate_text_height",
+    "shrink_content_box",
     "visual_area",
     "TEMPLATE_PATH",
     "get_presentation",

@@ -343,6 +343,137 @@ def _next_para(tf: TextFrame) -> _Paragraph:
     return tf.add_paragraph()
 
 
+# ─── text height estimation helpers ──────────────────────────
+
+_HEIGHT_SAFETY_MARGIN = 1.10
+_ASCII_WIDTH_FACTOR = 0.58
+_CJK_WIDTH_FACTOR = 1.0
+# Font metrics: actual line box (ascent+descent) is larger than em size.
+# CJK fonts like HY견고딕 have ~1.3x em size; Arial ~1.2x.
+# We use 1.3 as a conservative factor for mixed CJK/Latin text.
+_FONT_LINE_HEIGHT_FACTOR = 1.3
+
+# python-pptx default bodyPr insets (EMU)
+_BODY_INSET_TOP = 45_720
+_BODY_INSET_BOTTOM = 45_720
+_BODY_INSET_LEFT = 91_440
+_BODY_INSET_RIGHT = 91_440
+
+# Shape reference attribute stored on TextFrame by add_content_box
+_SHAPE_REF_ATTR = "_slide_forge_shape"
+
+
+def _detect_font_size(p_element) -> int | None:
+    """Extract font size (pt) from the first run's ``a:rPr`` ``sz`` attribute.
+
+    ``sz`` is in 1/100 pt units (e.g., ``1400`` = 14 pt).
+    Returns ``None`` if no run or no ``sz`` attribute is found.
+    """
+    for r in p_element.findall(qn("a:r")):
+        rPr = r.find(qn("a:rPr"))
+        if rPr is not None:
+            sz = rPr.get("sz")
+            if sz is not None:
+                return int(sz) // 100
+    return None
+
+
+def _estimate_text_width(text: str, font_size_pt: int) -> int:
+    """Estimate rendered text width in EMU.
+
+    Strips color tags and replaces ``->`` before measuring.
+    ASCII characters use ``_ASCII_WIDTH_FACTOR`` and CJK/full-width
+    characters use ``_CJK_WIDTH_FACTOR``.
+    """
+    # Strip color tags and replace arrow token
+    clean = _COLOR_TAG_RE.sub(r"\2", text)
+    clean = clean.replace("->", "\u2192")  # single char for width calc
+
+    total_emu = 0
+    emu_per_pt = 12700  # 1 pt = 12700 EMU
+    for ch in clean:
+        if ord(ch) < 128:
+            total_emu += int(_ASCII_WIDTH_FACTOR * font_size_pt * emu_per_pt)
+        else:
+            total_emu += int(_CJK_WIDTH_FACTOR * font_size_pt * emu_per_pt)
+    return total_emu
+
+
+def _classify_paragraph(
+    p_element,
+    *,
+    inner_width: int | None = None,
+) -> tuple[str, int, int, int]:
+    """Classify a paragraph element by its XML attributes.
+
+    Returns ``(type, font_size_pt, line_height_emu, available_width_emu)``.
+
+    Types:
+    - ``"spacer"``: no runs (empty separator line)
+    - ``"section"``: ``marL`` == 0 (section header)
+    - ``"bullet"``: ``marL`` >= ``_MARGIN_BASE`` (bullet point)
+    """
+    runs = p_element.findall(qn("a:r"))
+    pPr = p_element.find(qn("a:pPr"))
+    marL = int(pPr.get("marL", "0")) if pPr is not None else 0
+
+    # Usable width after bodyPr horizontal insets
+    if inner_width is None:
+        inner_width = int(_CONTENT_WIDTH) - _BODY_INSET_LEFT - _BODY_INSET_RIGHT
+
+    if not runs:
+        # Spacer: empty line, use 14pt default
+        font_size = 14
+        line_height = int(font_size * 12700 * _FONT_LINE_HEIGHT_FACTOR * _LINE_SPACING_PCT / 100000)
+        return ("spacer", font_size, line_height, inner_width)
+
+    font_size = _detect_font_size(p_element) or 14
+
+    # Line height = font_size (EMU) * line_spacing_pct / 100000
+    line_height = int(font_size * 12700 * _FONT_LINE_HEIGHT_FACTOR * _LINE_SPACING_PCT / 100000)
+
+    if marL == 0:
+        # Section header
+        return ("section", font_size, line_height, inner_width)
+
+    # Bullet: reduce available width by margin + indent
+    indent = abs(int(pPr.get("indent", "0"))) if pPr is not None else 0
+    available_width = inner_width - marL - indent
+    if available_width < 0:
+        available_width = inner_width // 2
+    return ("bullet", font_size, line_height, available_width)
+
+
+def _text_frame_shape(tf: TextFrame):
+    """Return the backing shape when available (set by add_content_box)."""
+    return getattr(tf, _SHAPE_REF_ATTR, None)
+
+
+def _text_frame_inner_width(tf: TextFrame) -> int:
+    """Return text-frame inner width (shape width minus body insets) in EMU."""
+    shape = _text_frame_shape(tf)
+    box_width = int(shape.width) if shape is not None else int(_CONTENT_WIDTH)
+    inner = box_width - _BODY_INSET_LEFT - _BODY_INSET_RIGHT
+    if inner > 0:
+        return inner
+    return max(1, box_width // 2)
+
+
+def _text_frame_top(tf: TextFrame) -> int:
+    """Return text-frame top in EMU, falling back to default content top."""
+    shape = _text_frame_shape(tf)
+    if shape is not None:
+        return int(shape.top)
+    return int(_CONTENT_TOP)
+
+
+def _text_frame_height_cap(tf: TextFrame) -> int:
+    """Return maximum usable text height in EMU for this text frame."""
+    shape = _text_frame_shape(tf)
+    cap = int(shape.height) if shape is not None else int(_CONTENT_HEIGHT)
+    return max(1, cap)
+
+
 # ─── internal: slide type validation ─────────────────────────
 
 
@@ -432,6 +563,7 @@ def add_content_box(
     tf = txBox.text_frame
     tf.word_wrap = True
     tf.clear()
+    setattr(tf, _SHAPE_REF_ATTR, txBox)
     return tf
 
 
@@ -540,6 +672,69 @@ def add_spacer(tf: TextFrame) -> _Paragraph:
     pPr.set("marL", str(_MARGIN_BASE))
     _set_line_spacing(pPr, _LINE_SPACING_PCT)
     return p
+
+
+# ─── text height estimation (public) ────────────────────────
+
+
+def estimate_text_height(tf: TextFrame) -> int:
+    """Estimate the rendered height of text in *tf* (EMU).
+
+    Walks each paragraph in the :class:`TextFrame`, classifies it via
+    :func:`_classify_paragraph`, estimates line-wrap count using
+    :func:`_estimate_text_width`, and sums ``line_height × n_lines``.
+
+    A 10 % safety margin is applied.  The result is capped at the
+    content-box height when available (fallback: ``_CONTENT_HEIGHT``).
+    """
+    import math
+
+    inner_width = _text_frame_inner_width(tf)
+    total = 0
+    for p in tf.paragraphs:
+        p_type, font_size, line_height, avail_width = _classify_paragraph(
+            p._element,
+            inner_width=inner_width,
+        )
+        if p_type == "spacer":
+            total += line_height
+            continue
+
+        text = p.text
+        if not text:
+            total += line_height
+            continue
+
+        text_width = _estimate_text_width(text, font_size)
+        if avail_width > 0:
+            n_lines = max(1, math.ceil(text_width / avail_width))
+        else:
+            n_lines = 1
+        total += line_height * n_lines
+
+    # Add bodyPr vertical insets (top + bottom padding inside the text box)
+    total += _BODY_INSET_TOP + _BODY_INSET_BOTTOM
+
+    result = int(total * _HEIGHT_SAFETY_MARGIN)
+    return min(result, _text_frame_height_cap(tf))
+
+
+def shrink_content_box(tf: TextFrame) -> int:
+    """Shrink the content box shape to match the actual text height.
+
+    Requires that *tf* was returned by :func:`add_content_box` (which
+    stores a shape reference via ``_slide_forge_shape``).
+
+    Returns the new bottom Y coordinate (``shape.top + new_height``) in EMU.
+    """
+    shape = getattr(tf, _SHAPE_REF_ATTR, None)
+    if shape is None:
+        raise RuntimeError(
+            "shrink_content_box()는 add_content_box()가 반환한 TextFrame에서만 사용할 수 있습니다."
+        )
+    new_height = estimate_text_height(tf)
+    shape.height = Emu(new_height)
+    return int(shape.top) + new_height
 
 
 def add_caption(
@@ -1608,6 +1803,7 @@ def visual_area(
     width: int = _CONTENT_WIDTH,
     height: int | None = None,
     gap: int = _VISUAL_GAP,
+    content_box: TextFrame | None = None,
 ) -> VisualArea:
     """Create a :class:`VisualArea` for auto-layout of visual elements.
 
@@ -1619,15 +1815,28 @@ def visual_area(
         Left edge in EMU (default: content box left).
     top : int, optional
         Top edge in EMU.  Defaults to content box bottom + gap.
+        When *content_box* is provided and *top* is ``None``, the top
+        is calculated from the estimated text height instead of the
+        fixed content box height.
     width : int
         Width in EMU (default: content box width).
     height : int, optional
         Height in EMU.  Defaults to fill to bottom margin.
     gap : int
         Horizontal gap between elements (default ~0.17").
+    content_box : TextFrame, optional
+        A :class:`TextFrame` returned by :func:`add_content_box`.
+        When provided (and *top* is ``None``), the visual area top is
+        positioned based on the estimated text height, giving more
+        room for visuals.  The content box shape is **not** resized
+        (``spAutoFit`` is preserved so text always renders fully).
     """
     if top is None:
-        top = int(_CONTENT_TOP) + int(_CONTENT_HEIGHT) + int(_VISUAL_TOP_GAP)
+        if content_box is not None:
+            text_h = estimate_text_height(content_box)
+            top = _text_frame_top(content_box) + text_h + int(_VISUAL_TOP_GAP)
+        else:
+            top = int(_CONTENT_TOP) + int(_CONTENT_HEIGHT) + int(_VISUAL_TOP_GAP)
     if height is None:
         height = 6_858_000 - int(_VISUAL_BOTTOM_MARGIN) - int(top)
     return VisualArea(

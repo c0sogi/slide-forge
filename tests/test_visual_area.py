@@ -3,24 +3,34 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-from pptx.util import Emu
 
 from slide_forge.default import get_presentation
 from slide_forge.default.slide import (
-    VisualArea,
+    _ASCII_WIDTH_FACTOR,
     _CAPTION_BOX_HEIGHT,
     _CAPTION_GAP,
+    _CJK_WIDTH_FACTOR,
     _CONTENT_HEIGHT,
     _CONTENT_LEFT,
     _CONTENT_TOP,
     _CONTENT_WIDTH,
+    _FONT_LINE_HEIGHT_FACTOR,
+    _LINE_SPACING_PCT,
+    _SHAPE_REF_ATTR,
     _VISUAL_BOTTOM_MARGIN,
     _VISUAL_GAP,
     _VISUAL_TOP_GAP,
-    add_chart,
+    _classify_paragraph,
+    _detect_font_size,
+    _estimate_text_width,
+    add_bullet,
+    add_content_box,
+    add_section,
     add_slide_title,
-    add_table,
+    add_spacer,
     create_slide,
+    estimate_text_height,
+    shrink_content_box,
     visual_area,
 )
 
@@ -449,3 +459,365 @@ class TestIntegration:
         from pptx.chart.chart import Chart
 
         assert isinstance(results[0], Chart)
+
+
+# ── _detect_font_size ────────────────────────────────────────
+
+
+class TestDetectFontSize:
+    def test_extracts_from_bullet(self, slide):
+        tf = add_content_box(slide)
+        add_section(tf, "Test")
+        add_bullet(tf, "Hello", level=0)
+        # Last paragraph is the bullet
+        p = tf.paragraphs[-1]
+        result = _detect_font_size(p._element)
+        assert result == 14  # L0 default
+
+    def test_extracts_from_level1_bullet(self, slide):
+        tf = add_content_box(slide)
+        add_section(tf, "Test")
+        add_bullet(tf, "Sub", level=1)
+        p = tf.paragraphs[-1]
+        result = _detect_font_size(p._element)
+        assert result == 12  # L1 default
+
+    def test_section_font_size(self, slide):
+        tf = add_content_box(slide)
+        add_section(tf, "Header")
+        p = tf.paragraphs[0]
+        result = _detect_font_size(p._element)
+        assert result == 18  # Section default
+
+    def test_returns_none_for_spacer(self, slide):
+        tf = add_content_box(slide)
+        add_section(tf, "Test")
+        add_spacer(tf)
+        # Spacer is the last paragraph (no runs)
+        p = tf.paragraphs[-1]
+        result = _detect_font_size(p._element)
+        assert result is None
+
+
+# ── _estimate_text_width ─────────────────────────────────────
+
+
+class TestEstimateTextWidth:
+    def _per_char_width(self, n: int, factor: float, font_size: int) -> int:
+        """Sum per-character int() to match implementation rounding."""
+        return sum(int(factor * font_size * 12700) for _ in range(n))
+
+    def test_ascii_only(self):
+        text = "Hello"
+        width = _estimate_text_width(text, 14)
+        expected = self._per_char_width(5, _ASCII_WIDTH_FACTOR, 14)
+        assert width == expected
+
+    def test_cjk_only(self):
+        text = "한글테스트"
+        width = _estimate_text_width(text, 14)
+        expected = self._per_char_width(5, _CJK_WIDTH_FACTOR, 14)
+        assert width == expected
+
+    def test_mixed_ascii_cjk(self):
+        text = "AB한글"
+        width = _estimate_text_width(text, 14)
+        ascii_w = self._per_char_width(2, _ASCII_WIDTH_FACTOR, 14)
+        cjk_w = self._per_char_width(2, _CJK_WIDTH_FACTOR, 14)
+        assert width == ascii_w + cjk_w
+
+    def test_strips_color_tags(self):
+        tagged = "[red]Hello[/red]"
+        plain = "Hello"
+        assert _estimate_text_width(tagged, 14) == _estimate_text_width(plain, 14)
+
+    def test_arrow_replacement(self):
+        text = "A->B"
+        width = _estimate_text_width(text, 14)
+        # "A->B" becomes "A→B" (3 chars: A=ascii, →=CJK, B=ascii)
+        ascii_w = self._per_char_width(2, _ASCII_WIDTH_FACTOR, 14)
+        cjk_w = self._per_char_width(1, _CJK_WIDTH_FACTOR, 14)
+        assert width == ascii_w + cjk_w
+
+    def test_empty_string(self):
+        assert _estimate_text_width("", 14) == 0
+
+
+# ── _classify_paragraph ─────────────────────────────────────
+
+
+class TestClassifyParagraph:
+    def test_spacer(self, slide):
+        tf = add_content_box(slide)
+        add_section(tf, "Test")
+        add_spacer(tf)
+        p = tf.paragraphs[-1]
+        p_type, font_size, line_height, avail_width = _classify_paragraph(p._element)
+        assert p_type == "spacer"
+        assert font_size == 14
+
+    def test_section(self, slide):
+        tf = add_content_box(slide)
+        add_section(tf, "Test Header")
+        p = tf.paragraphs[0]
+        p_type, font_size, line_height, avail_width = _classify_paragraph(p._element)
+        assert p_type == "section"
+        assert font_size == 18
+
+    def test_bullet_level0(self, slide):
+        tf = add_content_box(slide)
+        add_section(tf, "Test")
+        add_bullet(tf, "Bullet", level=0)
+        p = tf.paragraphs[-1]
+        p_type, font_size, line_height, avail_width = _classify_paragraph(p._element)
+        assert p_type == "bullet"
+        assert font_size == 14
+
+    def test_bullet_level1(self, slide):
+        tf = add_content_box(slide)
+        add_section(tf, "Test")
+        add_bullet(tf, "Sub-bullet", level=1)
+        p = tf.paragraphs[-1]
+        p_type, font_size, line_height, avail_width = _classify_paragraph(p._element)
+        assert p_type == "bullet"
+        assert font_size == 12
+
+    def test_line_height_includes_spacing(self, slide):
+        tf = add_content_box(slide)
+        add_section(tf, "Test")
+        add_bullet(tf, "Bullet", level=0)
+        p = tf.paragraphs[-1]
+        _, font_size, line_height, _ = _classify_paragraph(p._element)
+        expected = int(font_size * 12700 * _FONT_LINE_HEIGHT_FACTOR * _LINE_SPACING_PCT / 100000)
+        assert line_height == expected
+
+    def test_available_width_reduced_for_bullets(self, slide):
+        tf = add_content_box(slide)
+        add_section(tf, "Test")
+        add_bullet(tf, "Bullet", level=0)
+        p = tf.paragraphs[-1]
+        _, _, _, avail_width = _classify_paragraph(p._element)
+        assert avail_width < int(_CONTENT_WIDTH)
+
+
+# ── estimate_text_height ─────────────────────────────────────
+
+
+class TestEstimateTextHeight:
+    def test_basic_section_and_bullet(self, slide):
+        tf = add_content_box(slide)
+        add_section(tf, "Header")
+        add_bullet(tf, "Short bullet")
+        result = estimate_text_height(tf)
+        assert result > 0
+        assert result <= int(_CONTENT_HEIGHT)
+
+    def test_empty_textframe(self, slide):
+        tf = add_content_box(slide)
+        # TextFrame with only one empty paragraph
+        result = estimate_text_height(tf)
+        assert result > 0
+
+    def test_safety_margin_applied(self, slide):
+        tf = add_content_box(slide)
+        add_section(tf, "Header")
+        add_bullet(tf, "A")
+        result = estimate_text_height(tf)
+        # Without safety margin, sum would be smaller
+        # The result includes 10% margin
+        assert result > 0
+
+    def test_capped_at_content_box_height(self, slide):
+        """Even with many bullets, height shouldn't exceed content-box height."""
+        tf = add_content_box(slide)
+        add_section(tf, "Header")
+        for i in range(50):
+            add_bullet(tf, f"This is a very long bullet point number {i} " * 5)
+        result = estimate_text_height(tf)
+        shape = getattr(tf, _SHAPE_REF_ATTR)
+        assert result == int(shape.height)
+
+    def test_spacer_contributes_height(self, slide):
+        tf = add_content_box(slide)
+        add_section(tf, "Header")
+        add_bullet(tf, "A")
+        h1 = estimate_text_height(tf)
+        add_spacer(tf)
+        h2 = estimate_text_height(tf)
+        assert h2 > h1
+
+    def test_more_text_means_more_height(self, slide):
+        prs = get_presentation()
+        s1 = create_slide(prs)
+        tf1 = add_content_box(s1)
+        add_section(tf1, "H")
+        add_bullet(tf1, "Short")
+
+        s2 = create_slide(prs)
+        tf2 = add_content_box(s2)
+        add_section(tf2, "H")
+        add_bullet(tf2, "Short")
+        add_bullet(tf2, "Another line")
+        add_bullet(tf2, "Third line")
+
+        assert estimate_text_height(tf2) > estimate_text_height(tf1)
+
+    def test_wrapping_increases_height(self, slide):
+        """Long text that wraps should estimate taller than short text."""
+        prs = get_presentation()
+        s1 = create_slide(prs)
+        tf1 = add_content_box(s1)
+        add_section(tf1, "H")
+        add_bullet(tf1, "Short")
+
+        s2 = create_slide(prs)
+        tf2 = add_content_box(s2)
+        add_section(tf2, "H")
+        add_bullet(tf2, "This is a very long bullet that should wrap " * 10)
+
+        assert estimate_text_height(tf2) > estimate_text_height(tf1)
+
+    def test_narrower_content_box_increases_height(self):
+        """Narrower content box should produce taller estimates for same text."""
+        prs = get_presentation()
+        text = "This is a long bullet that should wrap differently by width. " * 4
+
+        s_wide = create_slide(prs)
+        tf_wide = add_content_box(s_wide, width=int(_CONTENT_WIDTH))
+        add_section(tf_wide, "H")
+        add_bullet(tf_wide, text)
+
+        s_narrow = create_slide(prs)
+        tf_narrow = add_content_box(s_narrow, width=2_400_000)
+        add_section(tf_narrow, "H")
+        add_bullet(tf_narrow, text)
+
+        assert estimate_text_height(tf_narrow) > estimate_text_height(tf_wide)
+
+    def test_custom_height_caps_estimate(self, slide):
+        """Estimate should be capped by custom content-box height."""
+        tf = add_content_box(slide, height=900_000)
+        add_section(tf, "Header")
+        for i in range(25):
+            add_bullet(tf, f"This is very long line {i} " * 8)
+        assert estimate_text_height(tf) == 900_000
+
+
+# ── shrink_content_box ───────────────────────────────────────
+
+
+class TestShrinkContentBox:
+    def test_shrinks_shape_height(self, slide):
+        tf = add_content_box(slide)
+        add_section(tf, "Header")
+        add_bullet(tf, "Short bullet")
+        shape = getattr(tf, _SHAPE_REF_ATTR)
+        original_height = int(shape.height)
+        bottom = shrink_content_box(tf)
+        new_height = int(shape.height)
+        assert new_height < original_height
+        assert bottom == int(shape.top) + new_height
+
+    def test_returns_bottom_coordinate(self, slide):
+        tf = add_content_box(slide)
+        add_section(tf, "Header")
+        add_bullet(tf, "Bullet")
+        bottom = shrink_content_box(tf)
+        shape = getattr(tf, _SHAPE_REF_ATTR)
+        assert bottom == int(shape.top) + int(shape.height)
+
+    def test_raises_without_shape_ref(self):
+        """shrink_content_box requires add_content_box's TextFrame."""
+        mock_tf = MagicMock(spec=["paragraphs"])
+        with pytest.raises(RuntimeError, match="add_content_box"):
+            shrink_content_box(mock_tf)
+
+    def test_add_content_box_stores_shape_ref(self, slide):
+        tf = add_content_box(slide)
+        shape = getattr(tf, _SHAPE_REF_ATTR, None)
+        assert shape is not None
+        assert hasattr(shape, "height")
+        assert hasattr(shape, "top")
+
+
+# ── visual_area with content_box ─────────────────────────────
+
+
+class TestVisualAreaContentBox:
+    def test_content_box_adjusts_top(self, slide):
+        """content_box parameter should position top based on estimated text height."""
+        tf = add_content_box(slide)
+        add_section(tf, "Header")
+        add_bullet(tf, "Short")
+
+        area = visual_area(slide, content_box=tf)
+        text_h = estimate_text_height(tf)
+        shape_top = int(getattr(tf, _SHAPE_REF_ATTR).top)
+        expected_top = shape_top + text_h + int(_VISUAL_TOP_GAP)
+        assert area._top == expected_top
+
+    def test_content_box_gives_more_height(self, slide):
+        """With content_box, the visual area should be taller (more room)."""
+        tf = add_content_box(slide)
+        add_section(tf, "Header")
+        add_bullet(tf, "Short")
+
+        area_default = visual_area(slide)
+        area_smart = visual_area(slide, content_box=tf)
+        # Smart positioning should yield a lower top → more height
+        assert area_smart._top < area_default._top
+        assert area_smart._height > area_default._height
+
+    def test_content_box_none_preserves_default(self, slide):
+        """content_box=None should behave exactly like before."""
+        area_default = visual_area(slide)
+        area_none = visual_area(slide, content_box=None)
+        assert area_default._top == area_none._top
+        assert area_default._height == area_none._height
+
+    def test_explicit_top_ignores_content_box(self, slide):
+        """When top is explicitly set, content_box is ignored."""
+        tf = add_content_box(slide)
+        add_section(tf, "Header")
+        add_bullet(tf, "Short")
+
+        area = visual_area(slide, top=5000000, content_box=tf)
+        assert area._top == 5000000
+
+    def test_content_box_height_auto_calculated(self, slide):
+        """Height should auto-fill from the smart top to bottom margin."""
+        tf = add_content_box(slide)
+        add_section(tf, "Header")
+        add_bullet(tf, "Short")
+
+        area = visual_area(slide, content_box=tf)
+        shape_top = int(getattr(tf, _SHAPE_REF_ATTR).top)
+        expected_top = shape_top + estimate_text_height(tf) + int(_VISUAL_TOP_GAP)
+        expected_height = 6_858_000 - int(_VISUAL_BOTTOM_MARGIN) - expected_top
+        assert area._height == expected_height
+
+    def test_content_box_custom_top_is_respected(self, slide):
+        """Smart top calculation should use the actual content-box top."""
+        custom_top = 1_500_000
+        tf = add_content_box(slide, top=custom_top)
+        add_section(tf, "Header")
+        add_bullet(tf, "Short")
+
+        area = visual_area(slide, content_box=tf)
+        expected_top = custom_top + estimate_text_height(tf) + int(_VISUAL_TOP_GAP)
+        assert area._top == expected_top
+
+    def test_full_workflow_integration(self, slide):
+        """Full workflow: create content → shrink → visual_area(content_box=...)."""
+        tf = add_content_box(slide)
+        add_section(tf, "주요 결과")
+        add_bullet(tf, "정상 데이터 1,198,500건(96.3%)")
+        add_bullet(tf, "Precision: [green]92.3%[/green], Recall: 88.0%", level=1)
+
+        shrink_content_box(tf)
+        area = visual_area(slide, content_box=tf)
+
+        # The area should have a valid top and height
+        assert area._top > int(_CONTENT_TOP)
+        assert area._height > 0
+        assert area._top + area._height <= 6_858_000

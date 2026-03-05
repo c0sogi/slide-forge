@@ -18,7 +18,6 @@ from slide_forge import (
     visual_area,
 )
 from slide_forge.default import get_presentation
-from slide_forge.default.slide import add_chart, add_figure, add_shape, add_table
 
 prs = get_presentation()
 
@@ -178,6 +177,68 @@ add_bullet(tf6, "각 add_* 메서드가 self를 반환하여 체이닝 가능", 
     )
     .render()
 )
+
+# ── 슬라이드 7: content_box — 텍스트 적은 경우 ────────────
+s7 = create_slide(prs)
+add_slide_title(s7, "content_box — 텍스트 적음")
+tf7 = add_content_box(s7)
+add_section(tf7, "간단한 요약")
+add_bullet(tf7, "정상 데이터 1,198,500건 (96.3%)")
+add_bullet(tf7, "Precision: [green]92.3%[/green]", level=1)
+
+area7 = visual_area(s7, content_box=tf7)
+area7.add_chart(
+    "column",
+    categories=["Precision", "Recall", "F1"],
+    series={"Score": [92.3, 88.0, 90.1]},
+    title="Detection Metrics",
+    caption="[Figure 1] 이상 탐지 성능",
+)
+area7.render()
+
+# ── 슬라이드 8: content_box — 텍스트 많은 경우 ────────────
+s8 = create_slide(prs)
+add_slide_title(s8, "content_box — 텍스트 많음")
+tf8 = add_content_box(s8)
+add_section(tf8, "실험 설정 및 이상 탐지 성능 평가")
+add_bullet(tf8, "학습 데이터: KAMP 공정 데이터 1,244,160건")
+add_bullet(tf8, "정상 1,198,500건(96.3%), 이상 45,660건(3.7%)", level=1)
+add_spacer(tf8)
+add_bullet(tf8, "Precision: [green]92.3%[/green], Recall: [green]88.0%[/green]")
+add_bullet(tf8, "F1-Score: [green]90.1%[/green] → 기존 대비 [red]+4.2%p[/red] 개선", level=1)
+add_bullet(tf8, "AUC-ROC: 0.953 → 안정적 분류 성능 확인", level=1)
+add_spacer(tf8)
+add_bullet(tf8, "J1(shoulder): R²=93.5% — 최고 성능")
+add_bullet(tf8, "J2(elbow): R²=23.2% — 비선형 운동 패턴으로 낮은 성능", level=1)
+add_bullet(tf8, "J3~J6 평균: R²=85.3% — 양호", level=1)
+
+area8 = visual_area(s8, content_box=tf8)
+area8.add_chart(
+    "column",
+    categories=["J1", "J2", "J3", "J4", "J5", "J6"],
+    series={"R²": [93.5, 23.2, 91.8, 45.6, 78.9, 95.1]},
+    title="Per-Joint R² Score",
+    caption="[Figure 2] Joint별 예측 정확도",
+)
+area8.render()
+
+# ── 슬라이드 9: content_box vs 기본 비교 (기본) ───────────
+s9 = create_slide(prs)
+add_slide_title(s9, "기본 visual_area (비교용)")
+tf9 = add_content_box(s9)
+add_section(tf9, "간단한 요약")
+add_bullet(tf9, "정상 데이터 1,198,500건 (96.3%)")
+add_bullet(tf9, "Precision: [green]92.3%[/green]", level=1)
+
+area9 = visual_area(s9)  # content_box 없이
+area9.add_chart(
+    "column",
+    categories=["Precision", "Recall", "F1"],
+    series={"Score": [92.3, 88.0, 90.1]},
+    title="Detection Metrics",
+    caption="[Figure 1] 이상 탐지 성능 (기본 배치)",
+)
+area9.render()
 
 # ── 저장 ───────────────────────────────────────────────────
 out = ".tmp-visual-area-demo.pptx"

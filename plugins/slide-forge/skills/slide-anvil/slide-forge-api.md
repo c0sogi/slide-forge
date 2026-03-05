@@ -7,7 +7,7 @@ slide-forge is a Python library. Write a `.py` file with **PEP 723 inline metada
 ```python
 # /// script
 # requires-python = ">=3.12"
-# dependencies = ["slide-forge==1.3.0"]
+# dependencies = ["slide-forge==1.3.1"]
 # ///
 
 from slide_forge import (
@@ -15,6 +15,7 @@ from slide_forge import (
     add_slide_title, add_content_box,
     add_section, add_bullet, add_spacer,
     add_shape, add_line, visual_area,
+    estimate_text_height, shrink_content_box,
 )
 from slide_forge.default.slide import add_table, add_chart, add_figure, add_cover_title, add_cover_info
 
@@ -527,6 +528,7 @@ area.render()
 | `width` | int | 8870234 | Width (EMU) |
 | `height` | int \| None | None | Height (EMU). None = fill to bottom margin |
 | `gap` | int | 150000 | Horizontal gap between elements (EMU) |
+| `content_box` | TextFrame \| None | None | TextFrame from `add_content_box()`. When provided and `top` is None, positions visual area based on estimated text height instead of fixed content box height, giving more room for visuals. |
 
 **Returns:** `VisualArea` container. Call `.render()` after adding all elements.
 
@@ -622,7 +624,59 @@ area.add_chart("column",
     categories=["A", "B", "C"],
     series={"S": [1, 2, 3]})
 area.render()
+
+# Smart positioning: visual area starts right below actual text
+tf = add_content_box(slide)
+add_section(tf, "주요 결과")
+add_bullet(tf, "정상 데이터 1,198,500건(96.3%)")
+add_bullet(tf, "Precision: [green]92.3%[/green], Recall: 88.0%", level=1)
+
+shrink_content_box(tf)  # optional: resize content box to match text
+area = visual_area(slide, content_box=tf)  # auto-positions below actual text
+area.add_figure("chart.png", caption="[Figure 1] Performance")
+area.render()
 ```
+
+### estimate_text_height(tf)
+
+Estimate the rendered height of text in a `TextFrame` (in EMU). Walks each paragraph, classifies it (section/bullet/spacer), estimates line-wrap count based on text width vs available width, and sums line heights. Applies a 10% safety margin and caps at the current content-box shape height (fallback: `_CONTENT_HEIGHT`).
+
+```python
+tf = add_content_box(slide)
+add_section(tf, "Results")
+add_bullet(tf, "Item 1")
+add_bullet(tf, "Item 2 with longer text", level=1)
+
+height_emu = estimate_text_height(tf)  # e.g., ~800000 EMU
+```
+
+**Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `tf` | TextFrame | A TextFrame populated with content |
+
+**Returns:** `int` — estimated height in EMU (capped at current content-box height when available).
+
+### shrink_content_box(tf)
+
+Shrink the content box shape to match the actual estimated text height. This prevents the invisible text box from overlapping with visual elements placed below it.
+
+```python
+tf = add_content_box(slide)
+add_section(tf, "Results")
+add_bullet(tf, "Short content")
+
+bottom_y = shrink_content_box(tf)  # returns new bottom Y coordinate
+```
+
+**Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `tf` | TextFrame | Must be from `add_content_box()` |
+
+**Returns:** `int` — new bottom Y coordinate (`shape.top + new_height`) in EMU.
+
+**Raises:** `RuntimeError` if *tf* was not created by `add_content_box()`.
 
 ### Important Notes
 
@@ -722,7 +776,7 @@ Emu(914400) # direct EMU value
 ```python
 # /// script
 # requires-python = ">=3.12"
-# dependencies = ["slide-forge==1.3.0"]
+# dependencies = ["slide-forge==1.3.1"]
 # ///
 
 from pptx.util import Inches, Emu
